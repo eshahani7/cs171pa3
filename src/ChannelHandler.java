@@ -23,8 +23,8 @@ public class ChannelHandler extends Thread {
     try {
       writer = new ObjectOutputStream(channel.getOutputStream());
       System.out.println("writer connected");
-      writer.flush();
-      System.out.println("flushed stream");
+      // writer.flush();
+      // System.out.println("flushed stream");
       System.out.println("trying to open reader");
       reader = new ObjectInputStream(channel.getInputStream());
       System.out.println("reader connected");
@@ -34,6 +34,10 @@ public class ChannelHandler extends Thread {
 
     while(true) {
       try {
+
+        writer.writeObject("string from " + process.num);
+        writer.flush();
+        writer.reset();
 
         if(sendPrepare){
 
@@ -47,8 +51,10 @@ public class ChannelHandler extends Thread {
 
         // read message
         Object msgObj = reader.readObject();
-        Message m = (Message) msgObj;
-        handleMessage(m);
+        // Message m = (Message) msgObj;
+        // handleMessage(m);
+        String s = (String) msgObj;
+        System.out.println(s);
       } catch(ClassNotFoundException e) {
         e.printStackTrace();
       } catch(IOException e) {

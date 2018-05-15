@@ -4,7 +4,7 @@ import java.util.*;
 import javafx.util.Pair;
 
 public class Node {
-  private int num;
+  public int num;
 
   private int PORT;
   private ServerSocket serverSock;
@@ -33,10 +33,11 @@ public class Node {
     config = new ArrayList< Pair<String, Integer> >();
     readConfigFile();
     PORT = config.get(num).getValue();
+    this.num = num;
     try {
       serverSock = new ServerSocket(PORT);
       System.out.println("Server up on port " + PORT);
-      config.remove(num);
+      // config.remove(num);
     } catch(IOException e) {
       e.printStackTrace();
     }
@@ -68,20 +69,21 @@ public class Node {
       e.printStackTrace();
     }
 
-    OutgoingHandler o = new OutgoingHandler(config);
+    OutgoingHandler o = new OutgoingHandler(config, this);
     o.start();
 
     try {
-      while(channels.size() < 4) {
+      while(channels.size() < num) {
         in = serverSock.accept();
         ChannelHandler c = new ChannelHandler(in, this);
         channels.add(c);
+        // c.start();
       }
 
     } catch(IOException e) {
       e.printStackTrace();
     }
-
+    //
     System.out.println(channels.size());
     for(int i = 0; i < channels.size(); i++) {
       channels.get(i).start();
