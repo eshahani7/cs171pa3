@@ -4,6 +4,7 @@ import java.util.*;
 import javafx.util.Pair;
 
 public class Node {
+  private int num;
   private int balance = 100;
   
   Queue<Transaction> q = new LinkedList();
@@ -16,19 +17,39 @@ public class Node {
   private Socket in;
   private boolean connected = false;
   private boolean accepted = false;
+  private BufferedReader br = null;
+
   
-  public Node() {
+  public Node(int num) {
+    config = new ArrayList< Pair<String, Integer> >();
+    readConfigFile();
+    PORT = config.get(num).getValue();
     try {
       serverSock = new ServerSocket(PORT);
-      config = new ArrayList< Pair<String, Integer> >();
       System.out.println("Server up on port " + PORT);
+      config.remove(num);
     } catch(IOException e) {
       e.printStackTrace();
     }
   }
   
   public void readConfigFile() {
-    //fill in config ArrayList
+    String line = null;
+    try {
+      br = new BufferedReader(new FileReader("config.txt"));
+    } catch(FileNotFoundException e){
+      e.printStackTrace();
+    }
+
+    try{
+      while ((line = br.readLine()) != null){
+        String[] splitStr = line.split("\\s+");
+        Pair<String, Integer> configPair = new Pair(splitStr[0],Integer.parseInt(splitStr[1]));
+        config.add(configPair);
+      }
+    } catch (IOException ie){
+      ie.printStackTrace();
+    }
   }
   
   public void setUp() {
@@ -54,7 +75,7 @@ public class Node {
   }
   
   public static void main(String[] args) {
-    Node n = new Node();
+    Node n = new Node(Integer.parseInt(args[0]));
     n.setUp();
   }
 }
