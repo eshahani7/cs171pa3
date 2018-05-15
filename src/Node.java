@@ -100,6 +100,11 @@ public class Node {
     if(b == acceptVal) {
       q.clear();
     }
+    applyTransactions(b);
+  }
+
+  public void applyTransactions(Block b) {
+    //deduct or add money if you're debit or credit node
   }
 
   public void printBlockchain() {
