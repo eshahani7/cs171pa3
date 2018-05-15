@@ -17,31 +17,35 @@ public class ChannelHandler extends Thread {
     process = n;
     sendPrepare = false;
     majority = 3;
-
+  }
+  //will need to access vars of node here
+  public void run() {
     try {
-      writer = new ObjectOutputStream(channel.getOutgoing().getOutputStream());
-      reader = new ObjectInputStream(channel.getIncoming().getInputStream());
+      writer = new ObjectOutputStream(channel.getOutputStream());
+      System.out.println("writer connected");
+      writer.flush();
+      System.out.println("flushed stream");
+      System.out.println("trying to open reader");
+      reader = new ObjectInputStream(channel.getInputStream());
+      System.out.println("reader connected");
     } catch(IOException e) {
       e.printStackTrace();
     }
-  }
 
-  //will need to access vars of node here
-  public void run() {
     while(true) {
       try {
 
         if(sendPrepare){
 
         }
-        else if(n.ackCount >= majority) {
+        else if(process.ackCount >= majority) {
           //send accept
         }
-        else if(n.acceptCount >= majority){
+        else if(process.acceptCount >= majority){
           //send decide
         }
 
-        //read message
+        // read message
         Object msgObj = reader.readObject();
         Message m = (Message) msgObj;
         handleMessage(m);
@@ -70,9 +74,5 @@ public class ChannelHandler extends Thread {
 
   public void prepare() {
     sendPrepare = true;
-  }
-
-  public void decide(){
-    sendDecide = true;
   }
 }

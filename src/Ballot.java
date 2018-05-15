@@ -12,7 +12,7 @@ public class Ballot implements Comparable<Ballot> {
   }
 
   public int compareTo(Ballot b) { //negative if this < b
-    if b.seqNum == this.seqNum {
+    if (b.seqNum == this.seqNum) {
       return Integer.compare(this.procId, b.procId);
     }
     return Integer.compare(this.seqNum, b.seqNum);

@@ -1,3 +1,7 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
 public class Block {
   private ArrayList<Transaction> tList;
   private int proposer;
@@ -20,7 +24,7 @@ public class Block {
         return false;
     }
 
-    Block b = (Block) b;
+    Block b = (Block) o;
     return b.tList.equals(this.tList) && b.proposer == this.proposer;
   }
 }

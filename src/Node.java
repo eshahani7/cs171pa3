@@ -16,7 +16,7 @@ public class Node {
 
   private Ballot ballotNum = new Ballot(0, num, 0);
   private Ballot acceptNum = new Ballot(0, 0, 0);
-  private Block acceptVal = NULL;
+  private Block acceptVal = null;
 
   ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
 
@@ -72,15 +72,20 @@ public class Node {
     o.start();
 
     try {
-      while(true) {
+      while(channels.size() < 4) {
         in = serverSock.accept();
-        ChannelHandler c = new ChannelHandler(in);
+        ChannelHandler c = new ChannelHandler(in, this);
         channels.add(c);
-        c.start();
-        System.out.println("connection accepted");
       }
+
     } catch(IOException e) {
       e.printStackTrace();
+    }
+
+    System.out.println(channels.size());
+    for(int i = 0; i < channels.size(); i++) {
+      channels.get(i).start();
+      System.out.println("thread started");
     }
   }
 

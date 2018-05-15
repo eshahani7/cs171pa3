@@ -1,3 +1,7 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
 public class Message {
 
   String msgType;
@@ -6,7 +10,7 @@ public class Message {
   Block v;
 
   //access directly, set unecessary fields to null for different message types
-  public Message(int msgType, Ballot bal, Ballot a, Block val) {
+  public Message(String msgType, Ballot bal, Ballot a, Block val) {
     this.msgType = msgType;
     this.bal = bal;
     this.a = a;
