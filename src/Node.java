@@ -14,9 +14,10 @@ public class Node {
   private boolean accepted = false;
   private BufferedReader br = null;
 
-  private Ballot ballotNum = new Ballot(0, num, 0);
-  private Ballot acceptNum = new Ballot(0, 0, 0);
-  private Block acceptVal = null;
+  Ballot ballotNum = new Ballot(0, num, 0);
+  Ballot acceptNum = new Ballot(0, 0, 0);
+  Block acceptVal = null;
+  Block initialVal = null;
 
   ArrayList<ChannelHandler> tempChannels = new ArrayList<ChannelHandler>();
   ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
@@ -25,7 +26,7 @@ public class Node {
   LinkedList<Block> blockchain = new LinkedList<Block>();
 
   int balance = 100;
-  int ackCount = 0;
+  int ackCount = 1;
   int acceptCount = 1;
   int majority = 3;
   boolean sendPrepare = false;
