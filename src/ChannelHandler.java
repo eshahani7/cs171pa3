@@ -60,26 +60,8 @@ public class ChannelHandler extends Thread {
           process.acceptVal = myVal;
           Message send = new Message("accept", process.ballotNum, null, myVal);
           sendMessage(send);
-          /*
-          LEADER
-          upon receiving (“ack”, BallotNum, b, v) from majority
-          if v = null for all
-            myVal = initial value
-          else
-            myVal = v with highest b
-          send(“accept”, b, myVal) to all
-          */
         }
         else if(process.acceptCount >= majority) { //only do this once, add bool
-          //send decide
-          /*
-          upon receiving majority of accepts
-          send(“decision”, b, v) to all
-          //call method in Node that appends block
-          //clear acks and accepts
-          //clear isLeader
-          */
-
           Message m = new Message("decision", process.ballotNum, null, myVal);
           clearVars();
           process.appendBlock(myVal);
@@ -102,11 +84,7 @@ public class ChannelHandler extends Thread {
 
   public void handleMessage(Message m) {
     if(m.msgType.equals("prepare")) {
-      /* ACCEPTOR RECEIVES MESSAGE
-      if bal >= BallotNum
-	     BallotNum = bal
-	     send(“ack”, BallotNum, AcceptNum, AcceptVal) to i
-      */
+      System.out.println("got prepare");
       if(m.bal.compareTo(process.ballotNum) >= 0) {
         process.ballotNum = m.bal;
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.acceptVal);
@@ -114,21 +92,13 @@ public class ChannelHandler extends Thread {
       }
     }
     else if(m.msgType.equals("ack")) {
+      System.out.println("got ack");
       //increment acks for node
       process.ackCount++;
       acks.add(m);
     }
     else if(m.msgType.equals("accept")) {
-      //IF LEADER:
-      //increment accepts for node
-      /*
-      IF ACCEPTOR
-      upon receiving (“accept”, b, v)
-      if b >= BallotNum
-      	AcceptNum = b
-        AcceptVal = v
-        send(“accept”, b, v) to i OR to all
-      */
+      System.out.println("got accept");
       if(isLeader) {
         process.acceptCount++;
       }
@@ -140,9 +110,7 @@ public class ChannelHandler extends Thread {
       }
     }
     else if(m.msgType.equals("decision")) { //acceptor gets decision
-      //call method in Node that appends block
-      //clear acks and accepts
-      //clear isLeader
+      System.out.println("got decision");
       process.appendBlock(m.v);
       clearVars();
     }
