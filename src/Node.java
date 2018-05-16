@@ -29,6 +29,7 @@ public class Node {
   int acceptCount = 1;
   int majority = 3;
   boolean sendPrepare = false;
+  double delay = 0;
 
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
@@ -103,6 +104,18 @@ public class Node {
     // }
     sendPrepare = true;
     acceptVal = new Block(q, num);
+  }
+
+  private class startElection extends TimerTask {
+    public void setPrepare(){
+      sendPrepare = true;
+    }
+  }
+
+  public void run(){
+    delay += Math.random * 6; 
+    Timer timer = new Timer();
+    timer.schedule(new startElection(),delay);
   }
 
   public void sentPrepare() {
