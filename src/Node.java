@@ -119,7 +119,8 @@ public class Node {
 
   private class startElection extends TimerTask {
     public void run(){
-      sendPrepare = true;
+      System.out.println("Depleted.");
+      //sendPrepare = true;
     }
   }
 
