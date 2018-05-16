@@ -32,6 +32,8 @@ public class Node {
   boolean sendPrepare = false;
   double delay = 0;
 
+  Timer timer = new Timer();
+
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
     readConfigFile();
@@ -115,7 +117,7 @@ public class Node {
 
   public void run(){
     delay += Math.random * 6; 
-    Timer timer = new Timer();
+    Stopwatch st = new Stopwatch();
     timer.schedule(new startElection(),delay);
   }
 
@@ -130,6 +132,8 @@ public class Node {
       q.clear();
     }
     applyTransactions(b);
+    timer.cancel();
+    run();
   }
 
   public void applyTransactions(Block b) {
