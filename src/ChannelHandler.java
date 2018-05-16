@@ -21,6 +21,12 @@ public class ChannelHandler extends Thread {
     majority = 3;
     isLeader = false;
   }
+
+  public void clearVars() {
+    isLeader = false;
+    acks.clear();
+    myVal = null;
+  }
   //will need to access vars of node here
   public void run() {
     try {
@@ -36,16 +42,10 @@ public class ChannelHandler extends Thread {
     while(true) {
       try {
         if(process.sendPrepare){
-          /*
-          BallotNum = <BallotNum.num + 1, myID)
-	        send(“prepare”, BallotNum) to all
-          */
           Ballot bal = process.ballotNum;
           bal.increaseSeqNum();
-          Message m = new Message("prepare", bal, null, null);
-          writer.writeObject(m);
-          writer.flush();
-          writer.reset();
+          Message send = new Message("prepare", bal, null, null);
+          sendMessage(send);
           process.sendPrepare = false;
         }
         else if(process.ackCount >= majority && !isLeader) { //only do this once, add bool
@@ -58,10 +58,8 @@ public class ChannelHandler extends Thread {
             myVal = acks.get(i).v;
           }
           process.acceptVal = myVal;
-          Message m = new Message("accept", process.ballotNum, myVal);
-          writer.writeObject(m);
-          writer.flush();
-          writer.reset();
+          Message send = new Message("accept", process.ballotNum, null, myVal);
+          sendMessage(send);
           /*
           LEADER
           upon receiving (“ack”, BallotNum, b, v) from majority
@@ -82,7 +80,12 @@ public class ChannelHandler extends Thread {
           //clear isLeader
           */
 
-          Message m = new Message("decision", process.ballotNum, myVal);
+          Message m = new Message("decision", process.ballotNum, null, myVal);
+          clearVars();
+          process.appendBlock(myVal);
+          writer.writeObject(m);
+          writer.flush();
+          writer.reset();
         }
 
         // read message
@@ -104,12 +107,10 @@ public class ChannelHandler extends Thread {
 	     BallotNum = bal
 	     send(“ack”, BallotNum, AcceptNum, AcceptVal) to i
       */
-      if(m.bal >= process.ballotNum) {
+      if(m.bal.compareTo(process.ballotNum) >= 0) {
         process.ballotNum = m.bal;
-        Message m = new Message("ack", process.ballotNum, process.acceptNum, process.acceptVal);
-        writer.writeObject(m);
-        writer.flush();
-        writer.reset();
+        Message send = new Message("ack", process.ballotNum, process.acceptNum, process.acceptVal);
+        sendMessage(send);
       }
     }
     else if(m.msgType.equals("ack")) {
@@ -131,19 +132,19 @@ public class ChannelHandler extends Thread {
       if(isLeader) {
         process.acceptCount++;
       }
-      else if(m.bal >= process.ballotNum) {
+      else if(m.bal.compareTo(process.ballotNum) >= 0) {
         process.acceptNum = m.a;
         process.acceptVal = m.v;
-        Message m = new Message("accept", process.ballotNum, process.acceptVal);
-        writer.writeObject(m);
-        writer.flush();
-        writer.reset();
+        Message send = new Message("accept", process.ballotNum, null, process.acceptVal);
+        sendMessage(send);
       }
     }
     else if(m.msgType.equals("decision")) { //acceptor gets decision
       //call method in Node that appends block
       //clear acks and accepts
       //clear isLeader
+      process.appendBlock(m.v);
+      clearVars();
     }
   }
 
@@ -155,12 +156,22 @@ public class ChannelHandler extends Thread {
         highest = acks.get(i).a;
         highestIndex = i;
       }
-      else if(acks.get(i).a > highest) {
+      else if(acks.get(i).a.compareTo(highest) > 0) {
         highest = acks.get(i).a;
         highestIndex = i;
       }
     }
 
     return highestIndex;
+  }
+
+  private void sendMessage(Message send) {
+    try {
+      writer.writeObject(send);
+      writer.flush();
+      writer.reset();
+    } catch(IOException e) {
+      e.printStackTrace();
+    }
   }
 }
