@@ -6,6 +6,6 @@ public class Driver {
   public static void main(String[] args) {
     Node n = new Node(Integer.parseInt(args[0]));
     n.setUp();
-    .run();
+    n.run();
    }
 }

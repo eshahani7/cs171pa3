@@ -30,7 +30,9 @@ public class Node {
   int acceptCount = 1;
   int majority = 3;
   boolean sendPrepare = false;
-  double delay = 0;
+  long delay = 0;
+  long start_time = 0;
+  long current_time = 0;
 
   Timer timer = new Timer();
 
@@ -116,14 +118,15 @@ public class Node {
   }
 
   private class startElection extends TimerTask {
-    public void setPrepare(){
+    public void run(){
       sendPrepare = true;
     }
   }
 
   public void run(){
-    delay += Math.random * 6; 
-    Stopwatch st = new Stopwatch();
+    delay = current_time - start_time;
+    delay += Math.random() * 6; 
+    start_time = System.nanoTime();
     timer.schedule(new startElection(),delay);
   }
 
@@ -139,6 +142,7 @@ public class Node {
     }
     applyTransactions(b);
     timer.cancel();
+    current_time = System.nanoTime();
     run();
   }
 
