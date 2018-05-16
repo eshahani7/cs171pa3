@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class Message {
+public class Message implements Serializable {
 
   String msgType;
   Ballot bal;

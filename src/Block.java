@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class Block {
+public class Block implements Serializable {
   private ArrayList<Transaction> tList;
   private int proposer;
 

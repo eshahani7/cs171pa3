@@ -35,6 +35,7 @@ public class Node {
   long current_time = 0;
 
   Timer timer = new Timer();
+  boolean firstAddition = true;
 
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
@@ -107,8 +108,14 @@ public class Node {
   }
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
+    System.out.println("amount: " + amount + ", debit: " + debitNode + ", credit: " + creditNode);
     Transaction t = new Transaction(amount, debitNode, creditNode);
     q.add(t);
+    if(firstAddition) {
+      System.out.println("first run");
+      run();
+      firstAddition = false;
+    }
   }
 
   private class startElection extends TimerTask {
@@ -116,6 +123,7 @@ public class Node {
       //System.out.println("Depleted.");
       sendPrepare = true;
       initialVal = new Block(q, num);
+      System.out.println("sendPrepare set to true");
     }
   }
 

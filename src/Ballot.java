@@ -1,6 +1,8 @@
 import java.util.*;
+import java.io.*;
+import java.net.*;
 
-public class Ballot implements Comparable<Ballot> {
+public class Ballot implements Comparable<Ballot>, Serializable {
   int seqNum;
   int procId;
   int depth;

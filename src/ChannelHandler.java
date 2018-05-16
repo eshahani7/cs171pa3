@@ -12,6 +12,8 @@ public class ChannelHandler extends Thread {
   private ObjectOutputStream writer = null;
   private ObjectInputStream reader = null;
 
+  boolean exit = false;
+
   private ArrayList<Message> acks = new ArrayList<Message>();
   Block myVal;
 
@@ -39,7 +41,8 @@ public class ChannelHandler extends Thread {
       e.printStackTrace();
     }
 
-    while(true) {
+    while(!exit) {
+      System.out.println("in thread loop");
       try {
         if(process.sendPrepare){
           Ballot bal = process.ballotNum;
@@ -65,9 +68,7 @@ public class ChannelHandler extends Thread {
           Message m = new Message("decision", process.ballotNum, null, myVal);
           clearVars();
           process.appendBlock(myVal);
-          writer.writeObject(m);
-          writer.flush();
-          writer.reset();
+          sendMessage(m);
         }
 
         // read message
@@ -124,7 +125,7 @@ public class ChannelHandler extends Thread {
         highest = acks.get(i).a;
         highestIndex = i;
       }
-      else if(acks.get(i).a.compareTo(highest) > 0) {
+      else if(highest != null && acks.get(i).a.compareTo(highest) > 0) {
         highest = acks.get(i).a;
         highestIndex = i;
       }
@@ -135,6 +136,11 @@ public class ChannelHandler extends Thread {
 
   private void sendMessage(Message send) {
     try {
+      try {
+        Thread.sleep(2000);
+      } catch(InterruptedException e) {
+        e.printStackTrace();
+      }
       writer.writeObject(send);
       writer.flush();
       writer.reset();
