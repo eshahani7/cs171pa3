@@ -14,7 +14,7 @@ public class Node {
   private boolean accepted = false;
   private BufferedReader br = null;
 
-  Ballot ballotNum = new Ballot(0, num, 0);
+  Ballot ballotNum = new Ballot(0, num, 1);
   Ballot acceptNum = new Ballot(0, 0, 0);
   Block acceptVal = null;
   Block initialVal = null;
