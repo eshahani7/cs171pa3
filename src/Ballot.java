@@ -11,6 +11,10 @@ public class Ballot implements Comparable<Ballot> {
     this.depth = depth;
   }
 
+  public void increaseSeqNum() {
+    seqNum++;
+  }
+
   public int compareTo(Ballot b) { //negative if this < b
     if (b.seqNum == this.seqNum) {
       return Integer.compare(this.procId, b.procId);
