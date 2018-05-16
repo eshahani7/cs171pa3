@@ -18,6 +18,7 @@ public class Node {
   private Ballot acceptNum = new Ballot(0, 0, 0);
   private Block acceptVal = null;
 
+  ArrayList<ChannelHandler> tempChannels = new ArrayList<ChannelHandler>();
   ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
 
   ArrayList<Transaction> q = new ArrayList<Transaction>();
@@ -27,7 +28,7 @@ public class Node {
   int ackCount = 0;
   int acceptCount = 1;
   int majority = 3;
-
+  boolean sendPrepare = false;
 
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
@@ -73,10 +74,10 @@ public class Node {
     o.start();
 
     try {
-      while(channels.size() < num) {
+      while(tempChannels.size() < num) {
         in = serverSock.accept();
         ChannelHandler c = new ChannelHandler(in, this);
-        channels.add(c);
+        tempChannels.add(c);
         // c.start();
       }
 
@@ -84,21 +85,28 @@ public class Node {
       e.printStackTrace();
     }
     //
-    System.out.println(channels.size());
-    for(int i = 0; i < channels.size(); i++) {
-      channels.get(i).start();
+    System.out.println(tempChannels.size());
+    for(int i = 0; i < tempChannels.size(); i++) {
+      tempChannels.get(i).start();
       System.out.println("thread started");
     }
+
+    channels.addAll(tempChannels);
   }
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
     //start leader election in here
     //add timer countdown; needs to be global?? execute for loop when it runs out
     //start phase 1 if queue empty --> iterate through channels and send "prepare"
-    for(int i = 0; i < channels.size(); i++) {
-      channels.get(i).prepare();
-    }
+    // for(int i = 0; i < channels.size(); i++) {
+    //   channels.get(i).prepare();
+    // }
+    sendPrepare = true;
     acceptVal = new Block(q, num);
+  }
+
+  public void sentPrepare() {
+    sendPrepare = false;
   }
 
   public void appendBlock(Block b) {

@@ -21,6 +21,7 @@ public class OutgoingHandler extends Thread {
         out = new Socket(connections.get(i).getKey(), connections.get(i).getValue());
         System.out.println("Connected to: " + connections.get(i).getKey() + " on port: " + connections.get(i).getValue());
         ChannelHandler c = new ChannelHandler(out, processor);
+        processor.channels.add(c);
         c.start();
       } catch(IOException e) {
         e.printStackTrace();
