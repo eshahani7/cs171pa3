@@ -25,4 +25,9 @@ public class Transaction {
     Transaction t = (Transaction) o;
     return t.amount == this.amount && t.debitNode == this.debitNode && t.creditNode == this.creditNode;
   }
+
+  @Override
+  public String toString() {
+    return "amount: " + amount + ", debit_node: " + debitNode + ", credit_node: " + creditNode;
+  }
 }

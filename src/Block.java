@@ -15,6 +15,10 @@ public class Block {
     tList.add(t);
   }
 
+  public ArrayList<Transaction> getList() {
+    return tList;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == this) {
@@ -26,5 +30,19 @@ public class Block {
 
     Block b = (Block) o;
     return b.tList.equals(this.tList) && b.proposer == this.proposer;
+  }
+
+  @Override
+  public String toString() {
+    String blockStr = "";
+    blockStr += "{";
+    for(int i = 0; i < tList.size(); i++) {
+      blockStr += tList.get(i).toString();
+      if(i != tList.size() - 1) {
+        blockStr += ", ";
+      }
+    }
+    blockStr += "}";
+    return blockStr;
   }
 }

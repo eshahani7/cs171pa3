@@ -107,25 +107,20 @@ public class Node {
   }
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
-    //start leader election in here
-    //add timer countdown; needs to be global?? execute for loop when it runs out
-    //start phase 1 if queue empty --> iterate through channels and send "prepare"
-    // for(int i = 0; i < channels.size(); i++) {
-    //   channels.get(i).prepare();
-    // }
-    sendPrepare = true;
-    acceptVal = new Block(q, num);
+    Transaction t = new Transaction(amount, debitNode, creditNode);
+    q.add(t);
   }
 
   private class startElection extends TimerTask {
     public void run(){
       sendPrepare = true;
+      initialVal = new Block(q, num);
     }
   }
 
   public void run(){
     delay = current_time - start_time;
-    delay += Math.random() * 6; 
+    delay += Math.random() * 6;
     start_time = System.nanoTime();
     timer.schedule(new startElection(),delay);
   }
@@ -148,17 +143,29 @@ public class Node {
 
   public void applyTransactions(Block b) {
     //deduct or add money if you're debit or credit node
+    ArrayList<Transaction> tList = b.getList();
+    for(int i = 0; i < tList.size(); i++) {
+      Transaction t = tList.get(i);
+      if(num == t.debitNode) {
+        balance -= num;
+      } else if(num == t.creditNode) {
+        balance += num;
+      }
+    }
   }
 
   public void printBlockchain() {
-
+    for(int i = 0; i < blockchain.size(); i++) {
+      System.out.println(blockchain.get(i));
+    }
   }
 
   public void printBalance() {
-
+    System.out.println("Current balance: $" + balance);
   }
 
   public void printQueue() {
-
+    Block queueBlock = new Block(q, num);
+    System.out.println(queueBlock);
   }
 }
