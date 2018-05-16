@@ -12,4 +12,17 @@ public class Transaction {
     this.debitNode = debitNode;
     this.creditNode = creditNode;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+        return true;
+    }
+    if (!(o instanceof Transaction)) {
+        return false;
+    }
+
+    Transaction t = (Transaction) o;
+    return t.amount == this.amount && t.debitNode == this.debitNode && t.creditNode == this.creditNode;
+  }
 }
