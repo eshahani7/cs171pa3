@@ -17,6 +17,8 @@ public class ChannelHandler extends Thread {
   private ArrayList<Message> acks = new ArrayList<Message>();
   Block myVal;
 
+  ReadHandler r = null;
+
   public ChannelHandler(Socket in, Node n) {
     channel = in;
     process = n;
@@ -29,6 +31,7 @@ public class ChannelHandler extends Thread {
     acks.clear();
     myVal = null;
   }
+
   //will need to access vars of node here
   public void run() {
     try {
@@ -42,8 +45,8 @@ public class ChannelHandler extends Thread {
     }
 
     while(!exit) {
-      System.out.println("in thread loop");
-      try {
+      // System.out.println("in thread loop");
+      // try {
         if(process.sendPrepare){
           Ballot bal = process.ballotNum;
           bal.increaseSeqNum();
@@ -72,13 +75,18 @@ public class ChannelHandler extends Thread {
         }
 
         // read message
-        Object msgObj = reader.readObject();
-        Message m = (Message) msgObj;
-        handleMessage(m);
-      } catch(ClassNotFoundException e) {
-        e.printStackTrace();
-      } catch(IOException e) {
-        e.printStackTrace();
+      //   Object msgObj = reader.readObject();
+      //   Message m = (Message) msgObj;
+      //   handleMessage(m);
+      // } catch(ClassNotFoundException e) {
+      //   e.printStackTrace();
+      // } catch(IOException e) {
+      //   e.printStackTrace();
+      // }
+
+      if(r == null) {
+        r = new ReadHandler();
+        r.start();
       }
     }
   }
@@ -146,6 +154,25 @@ public class ChannelHandler extends Thread {
       writer.reset();
     } catch(IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  private class ReadHandler extends Thread {
+    public void run() {
+      while(true) {
+        try {
+          System.out.println("trying to read");
+          Object msgObj = reader.readObject();
+          System.out.println("read");
+          Message m = (Message) msgObj;
+          handleMessage(m);
+        } catch(ClassNotFoundException e) {
+          e.printStackTrace();
+        } catch(IOException e) {
+          e.printStackTrace();
+        }
+      }
+
     }
   }
 }
