@@ -48,6 +48,12 @@ public class Node {
     }
   }
 
+  public void clearVars() {
+    ackCount = 1;
+    acceptCount = 1;
+    sendPrepare = false;
+  }
+
   public void readConfigFile() {
     String line = null;
     try {
@@ -128,7 +134,7 @@ public class Node {
   public void appendBlock(Block b) {
     blockchain.add(b);
     //clear queue if your block was added
-    if(b == acceptVal) {
+    if(b.equals(initialVal)) {
       q.clear();
     }
     applyTransactions(b);
