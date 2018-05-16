@@ -13,6 +13,8 @@ public class ChannelHandler extends Thread {
   private ObjectInputStream reader = null;
 
   boolean exit = false;
+  boolean acceptNotSent = true;
+  boolean decisionNotSent = true;
 
   private ArrayList<Message> acks = new ArrayList<Message>();
   Block myVal;
@@ -24,12 +26,15 @@ public class ChannelHandler extends Thread {
     process = n;
     majority = 3;
     isLeader = false;
+    myVal = null;
   }
 
   public void clearVars() {
     isLeader = false;
     acks.clear();
     myVal = null;
+    boolean acceptNotSent = true;
+    boolean decisionNotSent = true;
   }
 
   //will need to access vars of node here
@@ -54,9 +59,11 @@ public class ChannelHandler extends Thread {
           sendMessage(send);
           process.sendPrepare = false;
         }
-        else if(process.ackCount >= majority && !isLeader) { //only do this once, add bool
+        else if(process.getLeader() && acceptNotSent) { //only do this once, add bool
+          System.out.println("sending accepts");
+          acceptNotSent = false;
           //send accept
-          isLeader = true;
+          System.out.println(acks.size());
           int i = getHighestAck();
           if(i == -1) {
             myVal = process.initialVal; //?
@@ -67,11 +74,16 @@ public class ChannelHandler extends Thread {
           Message send = new Message("accept", process.ballotNum, null, myVal);
           sendMessage(send);
         }
-        else if(process.acceptCount >= majority) { //only do this once, add bool
+        else if(process.getAcceptCount() >= majority && decisionNotSent) { //only do this once, add bool
+          System.out.println("sending decision");
+          decisionNotSent = false;
           Message m = new Message("decision", process.ballotNum, null, myVal);
-          clearVars();
           process.appendBlock(myVal);
           sendMessage(m);
+          clearVars();
+        }
+        else {
+          sendMessage(null);
         }
 
         // read message
@@ -103,15 +115,20 @@ public class ChannelHandler extends Thread {
     else if(m.msgType.equals("ack")) {
       System.out.println("got ack");
       //increment acks for node
-      process.ackCount++;
+      process.incrementAcks();
       acks.add(m);
+      if(process.getAckCount() >= majority) {
+        process.setLeader(true);
+      }
     }
     else if(m.msgType.equals("accept")) {
-      System.out.println("got accept");
       if(isLeader) {
-        process.acceptCount++;
+        System.out.println("leader got accept");
+        process.incrementAccepts();
+        // System.out.println("acceptCount: " + process.acceptCount);
       }
       else if(m.bal.compareTo(process.ballotNum) >= 0) {
+        System.out.println("acceptor got accept");
         process.acceptNum = m.a;
         process.acceptVal = m.v;
         Message send = new Message("accept", process.ballotNum, null, process.acceptVal);
@@ -120,6 +137,7 @@ public class ChannelHandler extends Thread {
     }
     else if(m.msgType.equals("decision")) { //acceptor gets decision
       System.out.println("got decision");
+      System.out.println(m.v);
       process.appendBlock(m.v);
       clearVars();
     }
@@ -151,7 +169,7 @@ public class ChannelHandler extends Thread {
       }
       writer.writeObject(send);
       writer.flush();
-      writer.reset();
+      // writer.reset();
     } catch(IOException e) {
       e.printStackTrace();
     }
@@ -161,11 +179,13 @@ public class ChannelHandler extends Thread {
     public void run() {
       while(true) {
         try {
-          System.out.println("trying to read");
+          // System.out.println("trying to read");
           Object msgObj = reader.readObject();
-          System.out.println("read");
-          Message m = (Message) msgObj;
-          handleMessage(m);
+          // System.out.println("read");
+          if(msgObj instanceof Message) {
+            Message m = (Message) msgObj;
+            handleMessage(m);
+          }
         } catch(ClassNotFoundException e) {
           e.printStackTrace();
         } catch(IOException e) {

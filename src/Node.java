@@ -26,8 +26,8 @@ public class Node {
   LinkedList<Block> blockchain = new LinkedList<Block>();
 
   int balance = 100;
-  int ackCount = 1;
-  int acceptCount = 1;
+  private int ackCount = 1;
+  private int acceptCount = 1;
   int majority = 3;
   boolean sendPrepare = false;
   long delay = 0;
@@ -36,6 +36,7 @@ public class Node {
 
   Timer timer = new Timer();
   boolean firstAddition = true;
+  private boolean isLeader = false;
 
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
@@ -113,6 +114,7 @@ public class Node {
     q.add(t);
     if(firstAddition) {
       System.out.println("first run");
+      initialVal = new Block(q, num);
       run();
       firstAddition = false;
     }
@@ -122,7 +124,6 @@ public class Node {
     public void run(){
       //System.out.println("Depleted.");
       sendPrepare = true;
-      initialVal = new Block(q, num);
       System.out.println("sendPrepare set to true");
     }
   }
@@ -131,6 +132,7 @@ public class Node {
     delay = current_time - start_time;
     delay += Math.random() * 6;
     start_time = System.nanoTime();
+    Timer timer = new Timer();
     timer.schedule(new startElection(),delay);
   }
 
@@ -139,9 +141,11 @@ public class Node {
   }
 
   public void appendBlock(Block b) {
+    System.out.println("before add");
     blockchain.add(b);
+    System.out.println("after add");
     //clear queue if your block was added
-    if(b.equals(initialVal)) {
+    if(initialVal != null && b.equals(initialVal)) {
       q.clear();
     }
     applyTransactions(b);
@@ -176,5 +180,29 @@ public class Node {
   public void printQueue() {
     Block queueBlock = new Block(q, num);
     System.out.println(queueBlock);
+  }
+
+  public synchronized void incrementAcks() {
+    ackCount++;
+  }
+
+  public int getAckCount() {
+    return ackCount;
+  }
+
+  public int getAcceptCount() {
+    return acceptCount;
+  }
+
+  public synchronized void incrementAccepts() {
+    acceptCount++;
+  }
+
+  public synchronized void setLeader(boolean b) {
+    isLeader = b;
+  }
+
+  public boolean getLeader() {
+    return isLeader;
   }
 }
