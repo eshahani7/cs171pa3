@@ -17,10 +17,19 @@ public class Ballot implements Comparable<Ballot>, Serializable {
     seqNum++;
   }
 
+  public void increaseDepth() {
+    depth++;
+  }
+
   public int compareTo(Ballot b) { //negative if this < b
     if (b.seqNum == this.seqNum) {
       return Integer.compare(this.procId, b.procId);
     }
     return Integer.compare(this.seqNum, b.seqNum);
+  }
+
+  @Override
+  public String toString() {
+    return "<" + seqNum + ", " + procId + ", " + depth + ">";
   }
 }

@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class Transaction {
+public class Transaction implements Serializable {
   public int amount;
   public int debitNode;
   public int creditNode;

@@ -14,13 +14,14 @@ public class Node {
   private boolean accepted = false;
   private BufferedReader br = null;
 
-  Ballot ballotNum = new Ballot(0, num, 1);
+  Ballot ballotNum = new Ballot(0, num, 0);
   Ballot acceptNum = new Ballot(0, 0, 0);
   Block acceptVal = null;
   Block initialVal = null;
 
   ArrayList<ChannelHandler> tempChannels = new ArrayList<ChannelHandler>();
   ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
+  ArrayList<Message> acks = new ArrayList<Message>();
 
   ArrayList<Transaction> q = new ArrayList<Transaction>();
   LinkedList<Block> blockchain = new LinkedList<Block>();
@@ -28,6 +29,7 @@ public class Node {
   int balance = 100;
   private int ackCount = 1;
   private int acceptCount = 1;
+  private int prepareCount = 0;
   int majority = 3;
   boolean sendPrepare = false;
   long delay = 0;
@@ -35,6 +37,7 @@ public class Node {
   long current_time = 0;
 
   Timer timer = new Timer();
+  boolean inRound = false;
   boolean firstAddition = true;
   private boolean isLeader = false;
 
@@ -46,7 +49,6 @@ public class Node {
     try {
       serverSock = new ServerSocket(PORT);
       System.out.println("Server up on port " + PORT);
-      // config.remove(num);
     } catch(IOException e) {
       e.printStackTrace();
     }
@@ -56,6 +58,11 @@ public class Node {
     ackCount = 1;
     acceptCount = 1;
     sendPrepare = false;
+    isLeader = false;
+    ballotNum = new Ballot(0, num, 0);
+    acceptNum = new Ballot(0, 0, 0);
+    acceptVal = null;
+    // initialVal = null;
   }
 
   public void readConfigFile() {
@@ -120,38 +127,30 @@ public class Node {
     }
   }
 
-  private class startElection extends TimerTask {
-    public void run(){
-      //System.out.println("Depleted.");
-      sendPrepare = true;
-      System.out.println("sendPrepare set to true");
-    }
-  }
-
   public void run(){
+    clearVars();
     delay = current_time - start_time;
     delay += Math.random() * 6;
     start_time = System.nanoTime();
-    Timer timer = new Timer();
+    // Timer timer = new Timer();
     timer.schedule(new startElection(),delay);
   }
 
-  public void sentPrepare() {
-    sendPrepare = false;
-  }
-
-  public void appendBlock(Block b) {
-    System.out.println("before add");
-    blockchain.add(b);
-    System.out.println("after add");
-    //clear queue if your block was added
-    if(initialVal != null && b.equals(initialVal)) {
-      q.clear();
+  private class startElection extends TimerTask {
+    public void run(){
+      clearVars();
+      if(q.size() != 0) {
+        sendPrepare = true;
+        initialVal = new Block(q, num);
+        ballotNum.increaseSeqNum();
+        ballotNum.increaseDepth();
+        System.out.println("sendPrepare set to true");
+      }
+      // else {
+      //   timer.cancel();
+      //   run();
+      // }
     }
-    applyTransactions(b);
-    timer.cancel();
-    current_time = System.nanoTime();
-    run();
   }
 
   public void applyTransactions(Block b) {
@@ -160,9 +159,9 @@ public class Node {
     for(int i = 0; i < tList.size(); i++) {
       Transaction t = tList.get(i);
       if(num == t.debitNode) {
-        balance -= num;
+        balance -= t.amount;
       } else if(num == t.creditNode) {
-        balance += num;
+        balance += t.amount;
       }
     }
   }
@@ -182,7 +181,79 @@ public class Node {
     System.out.println(queueBlock);
   }
 
-  public synchronized void incrementAcks() {
+
+//where to clear vars? idk do timer for reelection agh
+  //------------------------------------PAXOS FUNCTIONS-----------------------//
+  public synchronized void appendBlock(Block b) {
+    if(blockchain.size() < acceptNum.depth) {
+      System.out.println("appending: " + b);
+      blockchain.add(b);
+      System.out.println("block added");
+      //clear queue if your block was added
+      if(b.equals(initialVal)) {
+        System.out.println("clearing queue");
+        // q.clear();
+        q = new ArrayList<Transaction>();
+      }
+      applyTransactions(b);
+      // Timer timer = new Timer();
+      // timer.cancel();
+      // current_time = System.nanoTime();
+      // run();
+    }
+  }
+
+  public synchronized void leaderAccept() {
+    Block high = getHighestAck();
+    if(high == null) {
+      System.out.println("highest ack null");
+      acceptVal = new Block(q, num);
+      initialVal = acceptVal;
+    } else {
+      acceptVal = high;
+    }
+    //accept your proposal
+    acceptNum = ballotNum;
+  }
+
+  public Block getHighestAck() {
+    System.out.println("get highest ack, acks size: " + acks.size());
+    Ballot highest = null;
+    int highestIndex = -1;
+    for(int i = 0; i < acks.size(); i++) {
+      if(highest == null && acks.get(i).a != null) {
+        highest = acks.get(i).a;
+        highestIndex = i;
+      }
+      else if((acks.get(i).a).compareTo(highest) > 0) {
+        highest = acks.get(i).a;
+        highestIndex = i;
+      }
+    }
+
+    Block highBlock = null;
+    if(highestIndex != -1) {
+      highBlock = acks.get(highestIndex).v;
+    }
+    return highBlock;
+  }
+
+  public void incrementPrepares() {
+    prepareCount++;
+    // channels.get(0).test();
+    if(prepareCount == 4) {
+      sendPrepare = false;
+    }
+  }
+
+  public synchronized void checkIfLeader() {
+    if(ackCount >= majority && !isLeader) {
+      isLeader = true;
+      leaderAccept();
+    }
+  }
+
+  public void incrementAcks() {
     ackCount++;
   }
 
@@ -190,16 +261,12 @@ public class Node {
     return ackCount;
   }
 
-  public int getAcceptCount() {
-    return acceptCount;
-  }
-
-  public synchronized void incrementAccepts() {
+  public void incrementAccepts() {
     acceptCount++;
   }
 
-  public synchronized void setLeader(boolean b) {
-    isLeader = b;
+  public int getAcceptCount() {
+    return acceptCount;
   }
 
   public boolean getLeader() {
