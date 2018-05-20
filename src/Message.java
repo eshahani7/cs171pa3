@@ -17,9 +17,9 @@ public class Message implements Serializable {
     this.v = val;
   }
 
-  public Message(String msgType, Ballot bal, Block val) {
-    this.msgType = msgType;
-    this.bal = bal;
-    this.v = val;
-  }
+  // public Message(String msgType, Ballot bal, Block val) {
+  //   this.msgType = msgType;
+  //   this.bal = bal;
+  //   this.v = val;
+  // }
 }
