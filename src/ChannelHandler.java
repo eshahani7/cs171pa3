@@ -16,8 +16,11 @@ public class ChannelHandler extends Thread {
   boolean sendDecide = false;
   boolean sendPrepare = false;
 
+  boolean sentAck = false;
+
   Ballot prepBallot;
   Block decideBlock;
+  Ballot acceptBallot;
 
   ReadHandler r = null;
 
@@ -37,6 +40,11 @@ public class ChannelHandler extends Thread {
     decideBlock = b;
   }
 
+  public void setAccept(Ballot a) {
+    sendAccept = true;
+    acceptBallot = a;
+  }
+
   public void run() {
     try {
       writer = new ObjectOutputStream(channel.getOutputStream());
@@ -51,7 +59,6 @@ public class ChannelHandler extends Thread {
     while(!exit) {
       if(sendPrepare){
         sendPrepare = false;
-        process.incrementPrepares();
         System.out.println("sending prepare w/ bal: " + prepBallot);
         Message send = new Message("prepare", prepBallot, null, null);
         sendMessage(send);
@@ -60,16 +67,17 @@ public class ChannelHandler extends Thread {
       else if(sendAccept) { //only do this once
         System.out.println("sending accepts");
         sendAccept = false;
-        Message send = new Message("accept", process.ballotNum, null, process.acceptVal);
+        Message send = new Message("accept", acceptBallot, null, process.acceptVal);
         // System.out.println(send.v);
         sendMessage(send);
+        acceptBallot = null;
       }
       else if(sendDecide) { //only do this once
         System.out.println("sending decision");
         sendDecide = false;
         Message m = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
         // process.appendBlock(decideBlock);
-        // System.out.println(decideBlock);
+        System.out.println(decideBlock);
         sendMessage(m);
         decideBlock = null;
       }
@@ -88,12 +96,10 @@ public class ChannelHandler extends Thread {
     if(m.msgType.equals("prepare")) {
       System.out.println("got prepare: " + m.bal);
       if(m.bal.compareTo(process.ballotNum) >= 0) {
-        if(process.getLeader()) {
-          process.acceptCount = -5; //NOT SURE ABOUT THIS, WANT TO DROP OUT?
-          process.ackCount = -5;
-        }
+        process.acceptCount = -5; //NOT SURE ABOUT THIS, WANT TO DROP OUT? EVEN IF NOT LEADER YET
+        process.ackCount = -5;
+
         process.setBallotNum(m.bal);
-        // process.ballotNum = m.bal;
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.getAcceptVal());
         System.out.println("sending ack: " + process.ballotNum + " with val: " + send.v  + ", with a: " + send.a);
         sendMessage(send);
@@ -112,17 +118,15 @@ public class ChannelHandler extends Thread {
       }
       else if(m.bal.compareTo(process.ballotNum) >= 0 && !sendDecide && process.blockchain.size() < m.bal.depth) {
         System.out.println("acceptor got accept: " + m.bal + " , " + m.v);
-        // process.acceptNum = m.bal;
-        // process.acceptVal = m.v;
         process.setAcceptNum(m.bal);
         process.setAcceptVal(m.v);
         Message send = new Message("accept", process.ballotNum, null, process.acceptVal);
         sendMessage(send);
+        System.out.println("sent accept to leader");
       }
     }
     else if(m.msgType.equals("decision")) { //acceptor gets decision
-      // System.out.println("got decision");
-      // System.out.println(m.v);
+      System.out.println("got decision: " + m.v);
       process.appendBlock(m.v);
     }
   }
@@ -136,7 +140,7 @@ public class ChannelHandler extends Thread {
       }
       writer.writeObject(send);
       writer.flush();
-      writer.reset();
+      // writer.reset();
     } catch(IOException e) {
       // e.printStackTrace();
     }

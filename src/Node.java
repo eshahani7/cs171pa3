@@ -123,11 +123,9 @@ public class Node {
   }
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
-    System.out.println("amount: " + amount + ", debit: " + debitNode + ", credit: " + creditNode);
     Transaction t = new Transaction(amount, debitNode, creditNode);
     q.add(t);
     if(firstAddition) {
-      System.out.println("first run");
       initialVal = new Block(q, num);
       run();
       firstAddition = false;
@@ -135,11 +133,6 @@ public class Node {
   }
 
   public void run(){
-    // clearVars();
-    // delay = current_time - start_time;
-    // delay += Math.random() * 6;
-    // start_time = System.nanoTime();
-    // Timer timer = new Timer();
     int rangeMin = 4;
     int rangeMax = 8;
     Random r = new Random();
@@ -148,34 +141,28 @@ public class Node {
     timer.schedule(new startElection(), delay, delay);
   }
 
-  //clear vars increments depth
-
   //case 1: proposal failed, want to try again in same round
   //case 2: new round, want to be leader if queue not empty
   //2a: was prev leader, want to be leader again
   //2b: was prev not leader, want to be leader now
   private class startElection extends TimerTask {
-    public void run(){
-      if(!isLeader && blockchain.size() < ballotNum.depth) {
-        // System.out.println("my proposal failed");
-        elect();
-      }
-      // else if(blockchain.size() == ballotNum.depth && isLeader) { //only do if decisions not sent already
-      //   if(dSent) {
-      //     System.out.println("decisions sent");
-      //     // clearVars();
-      //     ballotNum.increaseDepth();
-      //     elect();
-      //   }
+    public void run() {
+      // this doesn't work oops idk proposal failed, want to try again in same round
+      // if(!isLeader && blockchain.size() < ballotNum.depth) {
+      //   ballotNum.procId = num;
+      //   ackCount = 1;
+      //   acceptCount = 1;
+      //   elect();
       // }
+      //new round
       if(blockchain.size() == ballotNum.depth) {
+        ballotNum.increaseDepth();
         elect();
       }
     }
 
     private void elect() {
       if(q.size() != 0) {
-        ballotNum.increaseDepth();
         ballotNum.increaseSeqNum();
         Ballot prepBallot = ballotNum;
         System.out.println("starting election w/ ballot: " + ballotNum);
@@ -254,7 +241,7 @@ public class Node {
   }
 
   public synchronized void setAcceptVal(Block v) {
-    System.out.println("setting accept val to: " + v);
+    // System.out.println("setting accept val to: " + v);
     acceptVal = v;
   }
 
@@ -271,7 +258,6 @@ public class Node {
   }
 
   public Block getHighestAck() {
-    System.out.println("get highest ack, acks size: " + acks.size());
     Ballot highest = null;
     int highestIndex = -1;
     for(int i = 0; i < acks.size(); i++) {
@@ -292,20 +278,14 @@ public class Node {
     return highBlock;
   }
 
-  public synchronized void incrementPrepares() {
-    prepareCount++;
-    if(prepareCount == 4) {
-      sendPrepare = false;
-    }
-  }
-
   public synchronized void checkIfLeader() {
     if(ackCount >= majority && !isLeader && blockchain.size() < ballotNum.depth) {
+      Ballot a = ballotNum;
       isLeader = true;
       leaderAccept();
       for(int i = 0; i < channels.size(); i++) {
         if(channels.get(i) != null) {
-          channels.get(i).sendAccept = true;
+          channels.get(i).setAccept(a);
         }
       }
     }

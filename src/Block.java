@@ -37,7 +37,7 @@ public class Block implements Serializable {
     String blockStr = "";
     blockStr += "{";
     for(int i = 0; i < tList.size(); i++) {
-      blockStr += tList.get(i).toString();
+      blockStr += "(" + tList.get(i).toString() + ")";
       if(i != tList.size() - 1) {
         blockStr += ", ";
       }
