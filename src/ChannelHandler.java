@@ -103,6 +103,10 @@ public class ChannelHandler extends Thread {
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.getAcceptVal());
         System.out.println("sending ack: " + process.ballotNum + " with val: " + send.v  + ", with a: " + send.a);
         sendMessage(send);
+        if(process.firstAck) {
+          process.leaderTimeout();
+        }
+        process.firstAck = false;
       }
     }
     else if(m.msgType.equals("ack")) {

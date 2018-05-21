@@ -32,6 +32,7 @@ public class Node {
   int prepareCount = 0;
   int majority = 3;
   boolean sendPrepare = false;
+  boolean firstAck = true;
   long delay = 0;
   long start_time = 0;
   long current_time = 0;
@@ -62,6 +63,7 @@ public class Node {
     acceptCount = 1;
     sendPrepare = false;
     isLeader = false;
+    firstAck = true;
     ballotNum = new Ballot(0, num, blockchain.size());
     acceptNum = new Ballot(0, 0, 0);
     acceptVal = null;
@@ -138,7 +140,7 @@ public class Node {
     Random r = new Random();
     delay = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
     delay *= 1000;
-    timer.schedule(new startElection(), delay, delay);
+    timer.schedule(new startElection(), delay, 20*1000);
   }
 
   //case 1: proposal failed, want to try again in same round
@@ -160,20 +162,41 @@ public class Node {
         elect();
       }
     }
+  }
 
-    private void elect() {
-      if(q.size() != 0) {
-        ballotNum.increaseSeqNum();
-        Ballot prepBallot = ballotNum;
-        System.out.println("starting election w/ ballot: " + ballotNum);
-        for(int i = 0; i < channels.size(); i++) {
-          if(channels.get(i) != null) {
-            channels.get(i).setPrepare(prepBallot);
-          }
-        }
-        initialVal = new Block(q, num);
+  private class startElection2 extends TimerTask {
+    public void run() {
+      if(!isLeader && blockchain.size() < ballotNum.depth) {
+        ballotNum.procId = num;
+        ackCount = 1;
+        acceptCount = 1;
+        elect();
       }
     }
+  }
+
+  private void elect() {
+    if(q.size() != 0 || firstAck) {
+      ballotNum.increaseSeqNum();
+      Ballot prepBallot = ballotNum;
+      System.out.println("starting election w/ ballot: " + ballotNum);
+      for(int i = 0; i < channels.size(); i++) {
+        if(channels.get(i) != null) {
+          channels.get(i).setPrepare(prepBallot);
+        }
+      }
+      initialVal = new Block(q, num);
+    }
+  }
+
+  public void leaderTimeout() {
+    int rangeMin = 12;
+    int rangeMax = 24;
+    Random r = new Random();
+    long delay1 = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
+    delay1 *= 1000;
+    Timer timer2 = new Timer();
+    timer2.schedule(new startElection2(), delay1 * 3, delay1);
   }
 
   public void applyTransactions(Block b) {
