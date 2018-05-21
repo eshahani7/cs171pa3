@@ -33,18 +33,13 @@ public class Node {
   int majority = 3;
   boolean sendPrepare = false;
   boolean firstAck = true;
-  boolean timeoutSet = false;
   long delay = 0;
   long start_time = 0;
   long current_time = 0;
 
   Timer timer = new Timer();
-  Timer timer2 = new Timer();
-  Timer timeoutTimer = new Timer();
-  boolean inRound = false;
   boolean firstAddition = true;
   private boolean isLeader = false;
-  boolean dSent = false;
 
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
@@ -62,9 +57,6 @@ public class Node {
   }
 
   public void clearVars() {
-    timer2.cancel();
-    timeoutTimer.cancel();
-    timeoutSet = false;
     ackCount = 1;
     acceptCount = 1;
     sendPrepare = false;
@@ -73,11 +65,9 @@ public class Node {
     ballotNum = new Ballot(0, num, blockchain.size());
     acceptNum = new Ballot(0, 0, 0);
     acceptVal = null;
-    dSent = false;
     acks = new ArrayList<Message>();
     System.out.println("vars cleared");
     System.out.println("bal: " + ballotNum + ", accept: " + acceptNum + ", val: " + acceptVal);
-    // initialVal = null;
   }
 
   public void readConfigFile() {
@@ -114,7 +104,6 @@ public class Node {
         in = serverSock.accept();
         ChannelHandler c = new ChannelHandler(in, this);
         tempChannels.add(c);
-        // c.start();
       }
 
     } catch(IOException e) {
@@ -147,7 +136,7 @@ public class Node {
     Random r = new Random();
     delay = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
     delay *= 1000;
-    timer.schedule(new startElection(), delay, delay);
+    timer.schedule(new startElection(), delay, delay*6);
   }
 
   //case 1: proposal failed, want to try again in same round
@@ -156,21 +145,10 @@ public class Node {
   //2b: was prev not leader, want to be leader now
   private class startElection extends TimerTask {
     public void run() {
-      // this doesn't work oops idk proposal failed, want to try again in same round
-      // if(!isLeader && blockchain.size() < ballotNum.depth) {
-      //   ballotNum.procId = num;
-      //   ackCount = 1;
-      //   acceptCount = 1;
-      //   elect();
-      // }
-      //new round
-      // System.out.println("in start election");
-      if(blockchain.size() == ballotNum.depth) {
-        // System.out.println("in if");
-        if(q.size() != 0) {
-            // ballotNum.increaseDepth();
-            elect();
-        }
+      if(!isLeader) {
+          ackCount = 1;
+          acceptCount = 1;
+          elect();
       }
     }
   }
@@ -200,20 +178,6 @@ public class Node {
       }
       initialVal = new Block(q, num);
     }
-  }
-
-  public void leaderTimeout() {
-    int rangeMin = 12;
-    int rangeMax = 24;
-    Random r = new Random();
-    long delay1 = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
-    delay1 *= 1000;
-    Random r1 = new Random();
-    int rangeMin1 = 1;
-    int rangeMax1 = 3;
-    long rmult = (long)(rangeMin1 + (rangeMax1 - rangeMin1) * r1.nextDouble());
-    timer2 = new Timer();
-    timer2.schedule(new startElection2(), delay1 * rmult, delay1);
   }
 
   public void setAckTimeout() {
@@ -274,9 +238,6 @@ public class Node {
       }
       applyTransactions(b);
       clearVars();
-      // if(!isLeader || (isLeader && acceptCount < majority)) {
-      //   clearVars();
-      // }
     }
   }
 

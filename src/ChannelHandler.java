@@ -76,7 +76,6 @@ public class ChannelHandler extends Thread {
         System.out.println("sending decision");
         sendDecide = false;
         Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
-        // process.appendBlock(decideBlock);
         System.out.println(decideBlock);
         sendMessage(send);
         decideBlock = null;
@@ -97,14 +96,7 @@ public class ChannelHandler extends Thread {
     if(m.msgType.equals("prepare")) {
       System.out.println("got prepare: " + m.bal + ", accept: " + m.a);
       if(m.bal.compareTo(process.ballotNum) >= 0) {
-        process.acceptCount = -5; //NOT SURE ABOUT THIS, WANT TO DROP OUT? EVEN IF NOT LEADER YET
-        process.ackCount = -5;
-
         process.setBallotNum(m.bal);
-        if(!process.timeoutSet) {
-          process.setAckTimeout();
-          process.timeoutSet = true;
-        }
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.getAcceptVal());
         System.out.println("sending ack: " + process.ballotNum + " with val: " + send.v  + ", with a: " + send.a);
         sendMessage(send);
@@ -112,9 +104,11 @@ public class ChannelHandler extends Thread {
     }
     else if(m.msgType.equals("ack")) {
       System.out.println("got ack: " + m.bal + ", with val: " + m.v + ", and aNum: " + m.a);
-      process.acks.add(m);
-      process.incrementAcks();
-      process.checkIfLeader();
+      if(m.bal.compareTo(process.ballotNum) == 0) {
+        process.acks.add(m);
+        process.incrementAcks();
+        process.checkIfLeader();
+      }
     }
     else if(m.msgType.equals("accept")) {
       if(process.getLeader() && m.bal.compareTo(process.ballotNum) == 0) {
@@ -129,7 +123,6 @@ public class ChannelHandler extends Thread {
         sendMessage(send);
         System.out.println("sent accept to leader");
         if(process.firstAck) {
-          process.leaderTimeout();
           process.firstAck = false;
         }
       }
