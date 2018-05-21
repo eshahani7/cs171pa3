@@ -38,6 +38,7 @@ public class Node {
   long current_time = 0;
 
   Timer timer = new Timer();
+  Timer timer2 = new Timer();
   boolean inRound = false;
   boolean firstAddition = true;
   private boolean isLeader = false;
@@ -59,6 +60,7 @@ public class Node {
   }
 
   public void clearVars() {
+    timer2.cancel();
     ackCount = 1;
     acceptCount = 1;
     sendPrepare = false;
@@ -161,6 +163,11 @@ public class Node {
         ballotNum.increaseDepth();
         elect();
       }
+      else if(blockchain.size() < ballotNum.depth && q.size() != 0) {
+        clearVars();
+        ballotNum.increaseDepth();
+        elect();
+      }
     }
   }
 
@@ -198,8 +205,8 @@ public class Node {
     Random r1 = new Random();
     int rangeMin1 = 1;
     int rangeMax1 = 3;
-    long rmult = (long)(rangeMin1 + (rangeMax1 - rangeMin1) * r1.nextDouble()); 
-    Timer timer2 = new Timer();
+    long rmult = (long)(rangeMin1 + (rangeMax1 - rangeMin1) * r1.nextDouble());
+    timer2 = new Timer();
     timer2.schedule(new startElection2(), delay1 * rmult, delay1);
   }
 
