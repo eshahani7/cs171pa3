@@ -59,8 +59,8 @@ public class ChannelHandler extends Thread {
     while(!exit) {
       if(sendPrepare){
         sendPrepare = false;
-        System.out.println("sending prepare w/ bal: " + prepBallot);
         Message send = new Message("prepare", prepBallot, null, null);
+        System.out.println("sending prepare w/ bal: " + send.bal);
         sendMessage(send);
         prepBallot = null;
       }
@@ -75,10 +75,10 @@ public class ChannelHandler extends Thread {
       else if(sendDecide) { //only do this once
         System.out.println("sending decision");
         sendDecide = false;
-        Message m = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
+        Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
         // process.appendBlock(decideBlock);
         System.out.println(decideBlock);
-        sendMessage(m);
+        sendMessage(send);
         decideBlock = null;
       }
       else {
@@ -93,13 +93,18 @@ public class ChannelHandler extends Thread {
   }
 
   public void handleMessage(Message m) {
+
     if(m.msgType.equals("prepare")) {
-      System.out.println("got prepare: " + m.bal);
+      System.out.println("got prepare: " + m.bal + ", accept: " + m.a);
       if(m.bal.compareTo(process.ballotNum) >= 0) {
         process.acceptCount = -5; //NOT SURE ABOUT THIS, WANT TO DROP OUT? EVEN IF NOT LEADER YET
         process.ackCount = -5;
 
         process.setBallotNum(m.bal);
+        if(!process.timeoutSet) {
+          process.setAckTimeout();
+          process.timeoutSet = true;
+        }
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.getAcceptVal());
         System.out.println("sending ack: " + process.ballotNum + " with val: " + send.v  + ", with a: " + send.a);
         sendMessage(send);
@@ -125,8 +130,8 @@ public class ChannelHandler extends Thread {
         System.out.println("sent accept to leader");
         if(process.firstAck) {
           process.leaderTimeout();
+          process.firstAck = false;
         }
-        process.firstAck = false;
       }
 
     }

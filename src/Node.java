@@ -33,12 +33,14 @@ public class Node {
   int majority = 3;
   boolean sendPrepare = false;
   boolean firstAck = true;
+  boolean timeoutSet = false;
   long delay = 0;
   long start_time = 0;
   long current_time = 0;
 
   Timer timer = new Timer();
   Timer timer2 = new Timer();
+  Timer timeoutTimer = new Timer();
   boolean inRound = false;
   boolean firstAddition = true;
   private boolean isLeader = false;
@@ -61,6 +63,8 @@ public class Node {
 
   public void clearVars() {
     timer2.cancel();
+    timeoutTimer.cancel();
+    timeoutSet = false;
     ackCount = 1;
     acceptCount = 1;
     sendPrepare = false;
@@ -128,6 +132,7 @@ public class Node {
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
     Transaction t = new Transaction(amount, debitNode, creditNode);
+    System.out.println("in money transfer");
     q.add(t);
     if(firstAddition) {
       initialVal = new Block(q, num);
@@ -138,11 +143,11 @@ public class Node {
 
   public void run(){
     int rangeMin = 4;
-    int rangeMax = 8;
+    int rangeMax = 9;
     Random r = new Random();
     delay = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
     delay *= 1000;
-    timer.schedule(new startElection(), delay, 20*1000);
+    timer.schedule(new startElection(), delay, delay);
   }
 
   //case 1: proposal failed, want to try again in same round
@@ -159,14 +164,13 @@ public class Node {
       //   elect();
       // }
       //new round
+      // System.out.println("in start election");
       if(blockchain.size() == ballotNum.depth) {
-        ballotNum.increaseDepth();
-        elect();
-      }
-      else if(blockchain.size() < ballotNum.depth && q.size() != 0) {
-        clearVars();
-        ballotNum.increaseDepth();
-        elect();
+        // System.out.println("in if");
+        if(q.size() != 0) {
+            // ballotNum.increaseDepth();
+            elect();
+        }
       }
     }
   }
@@ -184,7 +188,9 @@ public class Node {
 
   private void elect() {
     if(q.size() != 0 || !firstAck) {
-      ballotNum.increaseSeqNum();
+      int old = ballotNum.seqNum;
+      ballotNum = new Ballot(old+1, num, blockchain.size() + 1);
+      // ballotNum.increaseSeqNum();
       Ballot prepBallot = ballotNum;
       System.out.println("starting election w/ ballot: " + ballotNum);
       for(int i = 0; i < channels.size(); i++) {
@@ -208,6 +214,19 @@ public class Node {
     long rmult = (long)(rangeMin1 + (rangeMax1 - rangeMin1) * r1.nextDouble());
     timer2 = new Timer();
     timer2.schedule(new startElection2(), delay1 * rmult, delay1);
+  }
+
+  public void setAckTimeout() {
+    System.out.println("ack timeout set..");
+    timeoutTimer = new Timer();
+    timeoutTimer.schedule(new TimerTask() {
+      public void run() {
+        System.out.println("checking if got accept");
+        if(acceptVal == null) {
+          clearVars();
+        }
+      }
+    }, 30*1000);
   }
 
   public void applyTransactions(Block b) {
