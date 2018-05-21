@@ -176,7 +176,7 @@ public class Node {
   }
 
   private void elect() {
-    if(q.size() != 0 || firstAck) {
+    if(q.size() != 0 || !firstAck) {
       ballotNum.increaseSeqNum();
       Ballot prepBallot = ballotNum;
       System.out.println("starting election w/ ballot: " + ballotNum);
@@ -195,8 +195,12 @@ public class Node {
     Random r = new Random();
     long delay1 = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
     delay1 *= 1000;
+    Random r1 = new Random();
+    int rangeMin1 = 1;
+    int rangeMax1 = 3;
+    long rmult = (long)(rangeMin1 + (rangeMax1 - rangeMin1) * r1.nextDouble()); 
     Timer timer2 = new Timer();
-    timer2.schedule(new startElection2(), delay1 * 3, delay1);
+    timer2.schedule(new startElection2(), delay1 * rmult, delay1);
   }
 
   public void applyTransactions(Block b) {

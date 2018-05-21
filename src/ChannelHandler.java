@@ -103,10 +103,6 @@ public class ChannelHandler extends Thread {
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.getAcceptVal());
         System.out.println("sending ack: " + process.ballotNum + " with val: " + send.v  + ", with a: " + send.a);
         sendMessage(send);
-        if(process.firstAck) {
-          process.leaderTimeout();
-        }
-        process.firstAck = false;
       }
     }
     else if(m.msgType.equals("ack")) {
@@ -127,7 +123,12 @@ public class ChannelHandler extends Thread {
         Message send = new Message("accept", process.ballotNum, null, process.acceptVal);
         sendMessage(send);
         System.out.println("sent accept to leader");
+        if(process.firstAck) {
+          process.leaderTimeout();
+        }
+        process.firstAck = false;
       }
+
     }
     else if(m.msgType.equals("decision")) { //acceptor gets decision
       System.out.println("got decision: " + m.v);
