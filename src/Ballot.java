@@ -22,8 +22,17 @@ public class Ballot implements Comparable<Ballot>, Serializable {
   }
 
   public int compareTo(Ballot b) { //negative if this < b
+    if(this.depth < b.depth) { //b greater
+      return -1;
+    }
+    if(b.depth < this.depth) { //b stale
+      return 1;
+    }
     if (b.seqNum == this.seqNum) {
       return Integer.compare(this.procId, b.procId);
+    }
+    if(b.seqNum > this.seqNum) {
+      return Integer.compare(this.depth, b.depth);
     }
     return Integer.compare(this.seqNum, b.seqNum);
   }

@@ -73,12 +73,14 @@ public class ChannelHandler extends Thread {
         acceptBallot = null;
       }
       else if(sendDecide) { //only do this once
-        System.out.println("sending decision");
-        sendDecide = false;
-        Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
-        System.out.println(decideBlock);
-        sendMessage(send);
-        decideBlock = null;
+        if(decideBlock != null) {
+          System.out.println("sending decision");
+          sendDecide = false;
+          Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
+          System.out.println(decideBlock);
+          sendMessage(send);
+          decideBlock = null;
+        }
       }
       else {
         sendMessage(null);
@@ -95,15 +97,18 @@ public class ChannelHandler extends Thread {
 
     if(m.msgType.equals("prepare")) {
       System.out.println("got prepare: " + m.bal + ", accept: " + m.a);
-      if(m.bal.compareTo(process.ballotNum) >= 0) {
+      if(m.bal.compareTo(process.ballotNum) >= 0 && m.bal.depth != process.blockchain.size()) { //msg ballot >= my ballot
         process.setBallotNum(m.bal);
         Message send = new Message("ack", process.ballotNum, process.acceptNum, process.getAcceptVal());
         System.out.println("sending ack: " + process.ballotNum + " with val: " + send.v  + ", with a: " + send.a);
         sendMessage(send);
       }
+      else {
+        System.out.println("rejecting prepare, my ballot is: " + process.ballotNum);
+      }
     }
     else if(m.msgType.equals("ack")) {
-      System.out.println("got ack: " + m.bal + ", with val: " + m.v + ", and aNum: " + m.a);
+      System.out.println("got ack: " + m.bal + ", with val: " + m.v + ", and aNum: " + m.a + ", myBal: " + process.ballotNum);
       if(m.bal.compareTo(process.ballotNum) == 0) {
         process.acks.add(m);
         process.incrementAcks();
@@ -122,8 +127,8 @@ public class ChannelHandler extends Thread {
         Message send = new Message("accept", process.ballotNum, null, process.acceptVal);
         sendMessage(send);
         System.out.println("sent accept to leader");
-        if(process.firstAck) {
-          process.firstAck = false;
+        if(process.getFirstAck()) {
+          process.setFirstAck(false);
         }
       }
 

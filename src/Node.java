@@ -61,7 +61,7 @@ public class Node {
     acceptCount = 1;
     sendPrepare = false;
     isLeader = false;
-    firstAck = true;
+    setFirstAck(true);
     ballotNum = new Ballot(0, num, blockchain.size());
     acceptNum = new Ballot(0, 0, 0);
     acceptVal = null;
@@ -166,9 +166,14 @@ public class Node {
 
   private void elect() {
     if(q.size() != 0 || !firstAck) {
+      if(q.size() != 0) {
+        System.out.println("election: queue not empty");
+      }
+      if(!firstAck) {
+        System.out.println("election: waiting for decision");
+      }
       int old = ballotNum.seqNum;
       ballotNum = new Ballot(old+1, num, blockchain.size() + 1);
-      // ballotNum.increaseSeqNum();
       Ballot prepBallot = ballotNum;
       System.out.println("starting election w/ ballot: " + ballotNum);
       for(int i = 0; i < channels.size(); i++) {
@@ -178,19 +183,6 @@ public class Node {
       }
       initialVal = new Block(q, num);
     }
-  }
-
-  public void setAckTimeout() {
-    System.out.println("ack timeout set..");
-    timeoutTimer = new Timer();
-    timeoutTimer.schedule(new TimerTask() {
-      public void run() {
-        System.out.println("checking if got accept");
-        if(acceptVal == null) {
-          clearVars();
-        }
-      }
-    }, 30*1000);
   }
 
   public void applyTransactions(Block b) {
@@ -245,8 +237,10 @@ public class Node {
     Block high = getHighestAck();
     if(high == null) {
       System.out.println("highest ack null");
-      acceptVal = new Block(q, num);
-      initialVal = acceptVal;
+      if(acceptVal == null) {
+        acceptVal = new Block(q, num);
+        initialVal = acceptVal;
+      }
     } else {
       acceptVal = high;
     }
@@ -269,6 +263,14 @@ public class Node {
 
   public synchronized void setAcceptNum(Ballot a) {
     acceptNum = a;
+  }
+
+  public synchronized void setFirstAck(boolean a) {
+    firstAck = a;
+  }
+
+  public synchronized boolean getFirstAck() {
+    return firstAck;
   }
 
   public Block getHighestAck() {
