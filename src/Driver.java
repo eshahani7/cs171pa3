@@ -4,7 +4,23 @@ import java.util.*;
 
 public class Driver {
   public static void main(String[] args) {
-    Node n = new Node(Integer.parseInt(args[0]));
+    Node n = null;
+    try {
+      ObjectInputStream is = new ObjectInputStream(new FileInputStream("Save"+Integer.parseInt(args[0])+".txt"));
+      System.out.println("Recovered from Save"+Integer.parseInt(args[0]));
+      n = (Node) is.readObject();
+      n.clearVars();
+      n.recovered = true;
+      System.out.println("I recovered");
+    } catch (IOException e){
+        e.printStackTrace();
+        n = new Node(Integer.parseInt(args[0]));
+        n.check = 1;
+
+    } catch (ClassNotFoundException e){
+      e.printStackTrace();
+    }
+    
     n.setUp();
 
     while (true){

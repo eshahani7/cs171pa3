@@ -30,6 +30,20 @@ public class ChannelHandler extends Thread {
     majority = 3;
   }
 
+  /*public boolean checkChannel() {
+    try{
+      if (channel.getInputStream() == null){
+        return false;
+      }
+      else {
+        return true;
+      }
+    } catch (IOException e){
+      e.printStackTrace();
+    }
+    return true;
+  }*/
+
   public void setPrepare(Ballot bal) {
     sendPrepare = true;
     prepBallot = bal;

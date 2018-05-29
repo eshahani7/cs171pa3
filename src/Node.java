@@ -3,13 +3,14 @@ import java.net.*;
 import java.util.*;
 import javafx.util.Pair;
 
-public class Node {
+public class Node implements Serializable{
   public int num;
+  boolean recovered = false;
+  int check = 0;
 
   private int PORT;
-  private ServerSocket serverSock;
+  transient ServerSocket serverSock;
   private ArrayList< Pair<String, Integer> > config;
-  private Socket in;
   private boolean connected = false;
   private boolean accepted = false;
   private BufferedReader br = null;
@@ -19,9 +20,9 @@ public class Node {
   Block acceptVal = null;
   Block initialVal = null;
 
-  ArrayList<ChannelHandler> tempChannels = new ArrayList<ChannelHandler>();
-  ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
-  ArrayList<Message> acks = new ArrayList<Message>();
+  transient ArrayList<ChannelHandler> tempChannels = new ArrayList<ChannelHandler>();
+  transient ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
+  transient ArrayList<Message> acks = new ArrayList<Message>();
 
   ArrayList<Transaction> q = new ArrayList<Transaction>();
   LinkedList<Block> blockchain = new LinkedList<Block>();
@@ -40,6 +41,7 @@ public class Node {
   Timer timer = new Timer();
   boolean firstAddition = true;
   private boolean isLeader = false;
+
 
   public Node(int num) {
     config = new ArrayList< Pair<String, Integer> >();
@@ -95,11 +97,14 @@ public class Node {
     } catch(InterruptedException e) {
       e.printStackTrace();
     }
-
+    
     OutgoingHandler o = new OutgoingHandler(config, this);
     o.start();
 
-    try {
+    IncomingHandler ih = new IncomingHandler(this);
+    ih.start();
+
+    /*try {
       while(tempChannels.size() < num) {
         in = serverSock.accept();
         ChannelHandler c = new ChannelHandler(in, this);
@@ -109,20 +114,27 @@ public class Node {
     } catch(IOException e) {
       e.printStackTrace();
     }
-    //
-    System.out.println(tempChannels.size());
-    for(int i = 0; i < tempChannels.size(); i++) {
-      tempChannels.get(i).start();
-      System.out.println("thread started");
-    }
-
-    channels.addAll(tempChannels);
+  //
+  System.out.println(tempChannels.size());
+  for(int i = 0; i < tempChannels.size(); i++) {
+    tempChannels.get(i).start();
+    System.out.println("thread started");
   }
+
+  channels.addAll(tempChannels);*/
+  
+}
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
     Transaction t = new Transaction(amount, debitNode, creditNode);
     System.out.println("in money transfer");
     q.add(t);
+    try {
+        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+num+".txt"));
+        os.writeObject(this);
+        os.close();
+    } catch (IOException e){
+    }
     if(firstAddition) {
       initialVal = new Block(q, num);
       run();
@@ -230,6 +242,12 @@ public class Node {
       }
       applyTransactions(b);
       clearVars();
+      try {
+        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+num+".txt"));
+        os.writeObject(this);
+        os.close();
+    } catch (IOException e){
+    }
     }
   }
 
