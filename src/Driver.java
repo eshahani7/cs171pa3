@@ -21,7 +21,7 @@ public class Driver {
     } catch (ClassNotFoundException e){
       e.printStackTrace();
     }
-    
+
     n.setUp();
 
     while (true){
@@ -43,6 +43,16 @@ public class Driver {
     	else if(cmd.equals("printQueue")){
     		n.printQueue();
     	}
+      else if(cmd.charAt(0) == 'b') {
+        int linkNum = Integer.parseInt(cmd.substring(2));
+        n.setLink(linkNum, false);
+        System.out.println("broke link to " + linkNum);
+      }
+      else if(cmd.charAt(0) == 'f') {
+        int linkNum = Integer.parseInt(cmd.substring(2));
+        n.setLink(linkNum, true);
+        System.out.println("fixed link to " + linkNum);
+      }
     }
 
   }

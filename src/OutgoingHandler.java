@@ -24,12 +24,13 @@ public class OutgoingHandler extends Thread {
           System.out.println("Connected to: " + connections.get(i).getKey() + " on port: " + connections.get(i).getValue());
           ChannelHandler c = new ChannelHandler(out, processor);
           processor.channels.add(c);
+          processor.linkStatus.put(i, true);
           c.start();
         } catch(IOException e) {
           e.printStackTrace();
         }
       }
-    } 
+    }
 
     else {
       System.out.println("Going into else in outgoing");
@@ -42,10 +43,11 @@ public class OutgoingHandler extends Thread {
             System.out.println("Connected to: " + connections.get(i).getKey() + " on port: " + connections.get(i).getValue());
             ChannelHandler c = new ChannelHandler(out, processor);
             processor.channels.add(c);
+            processor.linkStatus.put(i, true);
             c.start();
           }
         } catch(IOException e) {
-          e.printStackTrace();
+          // e.printStackTrace();
         }
       }
     }
