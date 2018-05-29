@@ -13,16 +13,16 @@ public class Node implements Serializable{
   private ArrayList< Pair<String, Integer> > config;
   private boolean connected = false;
   private boolean accepted = false;
-  private BufferedReader br = null;
+  private transient BufferedReader br = null;
 
   Ballot ballotNum;
   Ballot acceptNum;
   Block acceptVal = null;
   Block initialVal = null;
 
-  transient ArrayList<ChannelHandler> tempChannels = new ArrayList<ChannelHandler>();
-  transient ArrayList<ChannelHandler> channels = new ArrayList<ChannelHandler>();
-  transient ArrayList<Message> acks = new ArrayList<Message>();
+  transient ArrayList<ChannelHandler> tempChannels; 
+  transient ArrayList<ChannelHandler> channels; 
+  transient ArrayList<Message> acks; 
 
   ArrayList<Transaction> q = new ArrayList<Transaction>();
   LinkedList<Block> blockchain = new LinkedList<Block>();
@@ -38,12 +38,17 @@ public class Node implements Serializable{
   long start_time = 0;
   long current_time = 0;
 
-  Timer timer = new Timer();
+  transient Timer timer = new Timer();
   boolean firstAddition = true;
   private boolean isLeader = false;
 
 
   public Node(int num) {
+    tempChannels = new ArrayList<ChannelHandler>();
+    channels = new ArrayList<ChannelHandler>();
+    acks = new ArrayList<Message>();
+    timer = new Timer();
+
     config = new ArrayList< Pair<String, Integer> >();
     readConfigFile();
     PORT = config.get(num).getValue();
@@ -56,6 +61,20 @@ public class Node implements Serializable{
     } catch(IOException e) {
       e.printStackTrace();
     }
+  }
+
+  public void restore() {
+    tempChannels = new ArrayList<ChannelHandler>();
+    channels = new ArrayList<ChannelHandler>();
+    acks = new ArrayList<Message>();
+    try {
+      serverSock = new ServerSocket(PORT);
+      System.out.println("Server up on port " + PORT);
+    } catch(IOException e) {
+      e.printStackTrace();
+    }
+    timer = new Timer();
+    firstAddition = true;
   }
 
   public void clearVars() {

@@ -9,6 +9,7 @@ public class Driver {
       ObjectInputStream is = new ObjectInputStream(new FileInputStream("Save"+Integer.parseInt(args[0])+".txt"));
       System.out.println("Recovered from Save"+Integer.parseInt(args[0]));
       n = (Node) is.readObject();
+      n.restore();
       n.clearVars();
       n.recovered = true;
       System.out.println("I recovered");
