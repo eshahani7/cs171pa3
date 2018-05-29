@@ -20,9 +20,10 @@ public class Node implements Serializable{
   Block acceptVal = null;
   Block initialVal = null;
 
-  transient ArrayList<ChannelHandler> tempChannels; 
-  transient ArrayList<ChannelHandler> channels; 
-  transient ArrayList<Message> acks; 
+  transient ArrayList<ChannelHandler> tempChannels;
+  transient ArrayList<ChannelHandler> channels;
+  transient ArrayList<Message> acks;
+  transient Hashtable<Integer, Boolean> linkStatus;
 
   ArrayList<Transaction> q = new ArrayList<Transaction>();
   LinkedList<Block> blockchain = new LinkedList<Block>();
@@ -47,6 +48,7 @@ public class Node implements Serializable{
     tempChannels = new ArrayList<ChannelHandler>();
     channels = new ArrayList<ChannelHandler>();
     acks = new ArrayList<Message>();
+    linkStatus = new Hashtable<Integer, Boolean>();
     timer = new Timer();
 
     config = new ArrayList< Pair<String, Integer> >();
@@ -61,12 +63,18 @@ public class Node implements Serializable{
     } catch(IOException e) {
       e.printStackTrace();
     }
+    try {
+      ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+num+".txt"));
+      os.writeObject(this);
+      os.close();
+    } catch (IOException e){}
   }
 
   public void restore() {
     tempChannels = new ArrayList<ChannelHandler>();
     channels = new ArrayList<ChannelHandler>();
     acks = new ArrayList<Message>();
+    linkStatus = new Hashtable<Integer, Boolean>();
     try {
       serverSock = new ServerSocket(PORT);
       System.out.println("Server up on port " + PORT);
@@ -122,48 +130,40 @@ public class Node implements Serializable{
     } catch(InterruptedException e) {
       e.printStackTrace();
     }
-    
+
     OutgoingHandler o = new OutgoingHandler(config, this);
     o.start();
 
     IncomingHandler ih = new IncomingHandler(this);
     ih.start();
-
-    /*try {
-      while(tempChannels.size() < num) {
-        in = serverSock.accept();
-        ChannelHandler c = new ChannelHandler(in, this);
-        tempChannels.add(c);
-      }
-
-    } catch(IOException e) {
-      e.printStackTrace();
-    }
-  //
-  System.out.println(tempChannels.size());
-  for(int i = 0; i < tempChannels.size(); i++) {
-    tempChannels.get(i).start();
-    System.out.println("thread started");
   }
 
-  channels.addAll(tempChannels);*/
-  
-}
+  public void setLink(int linkNum, boolean status) {
+    linkStatus.put(linkNum, status);
+  }
 
   public void moneyTransfer(int amount, int debitNode, int creditNode) {
     Transaction t = new Transaction(amount, debitNode, creditNode);
-    System.out.println("in money transfer");
-    q.add(t);
-    try {
-        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+num+".txt"));
-        os.writeObject(this);
-        os.close();
-    } catch (IOException e){
+    if(debitNode != num) {
+      System.out.println("Error, can only initiate transaction from debitNode");
     }
-    if(firstAddition) {
-      initialVal = new Block(q, num);
-      run();
-      firstAddition = false;
+    else if(balance < amount) {
+      System.out.println("Error, attempting to overdraw");
+    }
+    else {
+      System.out.println("in money transfer");
+      q.add(t);
+      try {
+          ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+num+".txt"));
+          os.writeObject(this);
+          os.close();
+      } catch (IOException e){
+      }
+      if(firstAddition) {
+        initialVal = new Block(q, num);
+        run();
+        firstAddition = false;
+      }
     }
   }
 
@@ -271,8 +271,7 @@ public class Node implements Serializable{
         ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+num+".txt"));
         os.writeObject(this);
         os.close();
-    } catch (IOException e){
-    }
+    } catch (IOException e){}
     }
   }
 

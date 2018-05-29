@@ -7,6 +7,7 @@ public class ChannelHandler extends Thread {
   private Socket channel;
   private Node process;
   private int majority;
+  private int linkedTo;
 
   private ObjectOutputStream writer = null;
   private ObjectInputStream reader = null;
@@ -15,6 +16,7 @@ public class ChannelHandler extends Thread {
   boolean sendAccept = false;
   boolean sendDecide = false;
   boolean sendPrepare = false;
+
   boolean poll = false;
 
   boolean sentAck = false;
@@ -25,39 +27,33 @@ public class ChannelHandler extends Thread {
 
   ReadHandler r = null;
 
+
   public ChannelHandler(Socket in, Node n) {
     channel = in;
     process = n;
     majority = 3;
+    linkedTo = in.getPort() % 3000;
   }
 
-  /*public boolean checkChannel() {
-    try{
-      if (channel.getInputStream() == null){
-        return false;
-      }
-      else {
-        return true;
-      }
-    } catch (IOException e){
-      e.printStackTrace();
-    }
-    return true;
-  }*/
-
   public void setPrepare(Ballot bal) {
-    sendPrepare = true;
-    prepBallot = bal;
+    if(process.linkStatus.get(linkedTo)) {
+      sendPrepare = true;
+      prepBallot = bal;
+    }
   }
 
   public void setDecide(Block b) {
-    sendDecide = true;
-    decideBlock = b;
+    if(process.linkStatus.get(linkedTo)) {
+      sendDecide = true;
+      decideBlock = b;
+    }
   }
 
   public void setAccept(Ballot a) {
-    sendAccept = true;
-    acceptBallot = a;
+    if(process.linkStatus.get(linkedTo)) {
+      sendAccept = true;
+      acceptBallot = a;
+    }
   }
 
   public void run() {
@@ -72,30 +68,36 @@ public class ChannelHandler extends Thread {
     }
 
     while(!exit) {
-      if(sendPrepare){
-        sendPrepare = false;
-        Message send = new Message("prepare", prepBallot, null, null);
-        System.out.println("sending prepare w/ bal: " + send.bal);
-        sendMessage(send);
-        prepBallot = null;
-      }
-      else if(sendAccept) { //only do this once
-        System.out.println("sending accepts");
-        sendAccept = false;
-        Message send = new Message("accept", acceptBallot, null, process.acceptVal);
-        // System.out.println(send.v);
-        sendMessage(send);
-        acceptBallot = null;
-      }
-      else if(sendDecide) { //only do this once
-        if(decideBlock != null) {
-          System.out.println("sending decision");
-          sendDecide = false;
-          Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
-          System.out.println(decideBlock);
+      if(process.linkStatus.get(linkedTo)) {
+        if(sendPrepare){
+          sendPrepare = false;
+          Message send = new Message("prepare", prepBallot, null, null);
+          System.out.println("sending prepare w/ bal: " + send.bal);
           sendMessage(send);
-          decideBlock = null;
+          prepBallot = null;
         }
+        else if(sendAccept) { //only do this once
+          System.out.println("sending accepts");
+          sendAccept = false;
+          Message send = new Message("accept", acceptBallot, null, process.acceptVal);
+          // System.out.println(send.v);
+          sendMessage(send);
+          acceptBallot = null;
+        }
+        else if(sendDecide) { //only do this once
+          if(decideBlock != null) {
+            System.out.println("sending decision");
+            sendDecide = false;
+            Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
+            System.out.println(decideBlock);
+            sendMessage(send);
+            decideBlock = null;
+          }
+        }
+        else {
+          sendMessage(null);
+        }
+
       }
       else if(poll){
         poll = false;
@@ -107,9 +109,11 @@ public class ChannelHandler extends Thread {
         sendMessage(null);
       }
 
-      if(r == null) {
-        r = new ReadHandler();
-        r.start();
+
+        if(r == null) {
+          r = new ReadHandler();
+          r.start();
+        }
       }
     }
   }
@@ -218,19 +222,21 @@ public class ChannelHandler extends Thread {
   private class ReadHandler extends Thread {
     public void run() {
       while(true) {
-        try {
-          Object msgObj = reader.readObject();
-          if(msgObj instanceof Message) {
-            Message m = (Message) msgObj;
-            handleMessage(m);
+        if(process.linkStatus.get(linkedTo)) {
+          try {
+            Object msgObj = reader.readObject();
+            if(msgObj instanceof Message) {
+              Message m = (Message) msgObj;
+              handleMessage(m);
+            }
+          } catch(ClassNotFoundException e) {
+            // e.printStackTrace();
+          } catch(IOException e) {
+            // e.printStackTrace();
           }
-        } catch(ClassNotFoundException e) {
-          // e.printStackTrace();
-        } catch(IOException e) {
-          // e.printStackTrace();
         }
       }
-
     }
   }
+
 }
