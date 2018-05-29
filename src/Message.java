@@ -8,6 +8,7 @@ public class Message implements Serializable {
   Ballot bal = null;
   Ballot a = null;
   Block v = null;
+  LinkedList<Block> blockchain = null;
 
   //access directly, set unecessary fields to null for different message types
   public Message(String msgType, Ballot bal, Ballot a, Block val) {

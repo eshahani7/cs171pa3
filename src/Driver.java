@@ -21,7 +21,7 @@ public class Driver {
     } catch (ClassNotFoundException e){
       e.printStackTrace();
     }
-    
+
     n.setUp();
 
     while (true){

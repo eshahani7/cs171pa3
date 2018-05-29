@@ -15,6 +15,7 @@ public class ChannelHandler extends Thread {
   boolean sendAccept = false;
   boolean sendDecide = false;
   boolean sendPrepare = false;
+  boolean poll = false;
 
   boolean sentAck = false;
 
@@ -96,6 +97,12 @@ public class ChannelHandler extends Thread {
           decideBlock = null;
         }
       }
+      else if(poll){
+        poll = false;
+        System.out.println("polling for blockchain");
+        Message send = new Message("poll",null,null,null);
+        sendMessage(send);
+      }
       else {
         sendMessage(null);
       }
@@ -119,6 +126,9 @@ public class ChannelHandler extends Thread {
       }
       else {
         System.out.println("rejecting prepare, my ballot is: " + process.ballotNum);
+        Message send = new Message("stale",null,null,null);
+        send.blockchain = process.blockchain;
+        sendMessage(send);
       }
     }
     else if(m.msgType.equals("ack")) {
@@ -149,7 +159,44 @@ public class ChannelHandler extends Thread {
     }
     else if(m.msgType.equals("decision")) { //acceptor gets decision
       System.out.println("got decision: " + m.v);
-      process.appendBlock(m.v);
+      if (m.bal.depth > process.blockchain.size() + 1){
+        process.pollBlockchain();
+      }
+      else {
+        process.appendBlock(m.v);
+      }
+    }
+
+    else if(m.msgType.equals("poll")){
+      System.out.println("got poll request");
+      m.blockchain = process.blockchain;
+      m.msgType = "pollReturn";
+      sendMessage(m);
+    }
+
+    else if(m.msgType.equals("pollReturn")){
+      System.out.println("got blockchain");
+      if(m.blockchain.size() > process.blockchain.size()){
+        process.blockchain = m.blockchain;
+        try {
+          ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+process.num+".txt"));
+          os.writeObject(process);
+          os.close();
+        } catch (IOException e){
+        }
+      }
+    }
+
+    else if(m.msgType.equals("stale")){
+      if (m.blockchain.size() > process.blockchain.size()){
+        process.blockchain = m.blockchain;
+      }
+      try {
+          ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+process.num+".txt"));
+          os.writeObject(process);
+          os.close();
+      } catch (IOException e){
+      }
     }
   }
 

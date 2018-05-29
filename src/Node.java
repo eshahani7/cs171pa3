@@ -77,6 +77,12 @@ public class Node implements Serializable{
     firstAddition = true;
   }
 
+  public void pollBlockchain(){
+    for (int i = 0; i < channels.size(); i++){
+      channels.get(i).poll = true;
+    }
+  }
+
   public void clearVars() {
     ackCount = 1;
     acceptCount = 1;
