@@ -116,7 +116,6 @@ public class ChannelHandler extends Thread {
         }
       }
     }
-  }
 
   public void handleMessage(Message m) {
 
