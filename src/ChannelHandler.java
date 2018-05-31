@@ -178,11 +178,12 @@ public class ChannelHandler extends Thread {
     else if(m.msgType.equals("pollReturn")){
       System.out.println("got blockchain");
       if(m.blockchain.size() > process.blockchain.size()){
-        /*for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
-          ArrayList<Tranm.blockchain.get(i).getList();        
-        }*/
+        for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
+          process.applyTransactions(m.blockchain.get(i));        
+        }
 
         process.blockchain = m.blockchain;
+        process.clearVars();
 
         try {
           ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+process.num+".txt"));
@@ -195,6 +196,10 @@ public class ChannelHandler extends Thread {
 
     else if(m.msgType.equals("stale")){
       if (m.blockchain.size() > process.blockchain.size()){
+        for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
+          process.applyTransactions(m.blockchain.get(i));        
+        }
+
         process.blockchain = m.blockchain;
         System.out.println("correcting stale");
         try {

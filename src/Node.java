@@ -82,7 +82,12 @@ public class Node implements Serializable{
       e.printStackTrace();
     }
     timer = new Timer();
-    firstAddition = true;
+    if (q.size() > 0){
+      run();
+    }
+    else{
+      firstAddition = true;
+    }
   }
 
   public void pollBlockchain(){
@@ -173,7 +178,7 @@ public class Node implements Serializable{
     Random r = new Random();
     delay = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
     delay *= 1000;
-    timer.schedule(new startElection(), delay, delay*6);
+    timer.schedule(new startElection(), delay, delay*5);
   }
 
   //case 1: proposal failed, want to try again in same round
@@ -222,7 +227,7 @@ public class Node implements Serializable{
     }
   }
 
-  public void applyTransactions(Block b) {
+  public synchronized void applyTransactions(Block b) {
     //deduct or add money if you're debit or credit node
     ArrayList<Transaction> tList = b.getList();
     for(int i = 0; i < tList.size(); i++) {
