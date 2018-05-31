@@ -94,17 +94,15 @@ public class ChannelHandler extends Thread {
             decideBlock = null;
           }
         }
-        else {
-          sendMessage(null);
-        }
 
+        else if(poll){
+          poll = false;
+          System.out.println("polling for blockchain");
+          Message send = new Message("poll",null,null,null);
+          sendMessage(send);
+        }
       }
-      else if(poll){
-        poll = false;
-        System.out.println("polling for blockchain");
-        Message send = new Message("poll",null,null,null);
-        sendMessage(send);
-      }
+
       else {
         sendMessage(null);
       }
@@ -180,7 +178,12 @@ public class ChannelHandler extends Thread {
     else if(m.msgType.equals("pollReturn")){
       System.out.println("got blockchain");
       if(m.blockchain.size() > process.blockchain.size()){
+        /*for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
+          ArrayList<Tranm.blockchain.get(i).getList();        
+        }*/
+
         process.blockchain = m.blockchain;
+
         try {
           ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+process.num+".txt"));
           os.writeObject(process);
@@ -193,12 +196,12 @@ public class ChannelHandler extends Thread {
     else if(m.msgType.equals("stale")){
       if (m.blockchain.size() > process.blockchain.size()){
         process.blockchain = m.blockchain;
-      }
-      try {
+        System.out.println("correcting stale");
+        try {
           ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("Save"+process.num+".txt"));
           os.writeObject(process);
           os.close();
-      } catch (IOException e){
+        } catch (IOException e){}
       }
     }
   }

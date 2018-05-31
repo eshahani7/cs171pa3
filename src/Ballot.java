@@ -31,9 +31,6 @@ public class Ballot implements Comparable<Ballot>, Serializable {
     if (b.seqNum == this.seqNum) {
       return Integer.compare(this.procId, b.procId);
     }
-    if(b.seqNum > this.seqNum) {
-      return Integer.compare(this.depth, b.depth);
-    }
     return Integer.compare(this.seqNum, b.seqNum);
   }
 
