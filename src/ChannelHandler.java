@@ -154,6 +154,7 @@ public class ChannelHandler extends Thread {
         System.out.println("sent accept to leader");
         if(process.getFirstAck()) {
           process.setFirstAck(false);
+          process.leaderTimeout();
         }
       }
 
@@ -179,8 +180,7 @@ public class ChannelHandler extends Thread {
       System.out.println("got blockchain");
       if(m.blockchain.size() > process.blockchain.size()){
         for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
-          process.applyTransactions(m.blockchain.get(i));
-          process.checkToClearQueue(m.blockchain.get(i));        
+          process.applyTransactions(m.blockchain.get(i));        
         }
 
         process.blockchain = m.blockchain;
@@ -196,9 +196,11 @@ public class ChannelHandler extends Thread {
     }
 
     else if(m.msgType.equals("stale")){
+      System.out.println("stale " + m.blockchain.size() + " " + process.blockchain.size());
       if (m.blockchain.size() > process.blockchain.size()){
         for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
           process.applyTransactions(m.blockchain.get(i));
+          process.checkToClearQueue(m.blockchain.get(i));
         }
 
         process.blockchain = m.blockchain;
@@ -230,19 +232,20 @@ public class ChannelHandler extends Thread {
   private class ReadHandler extends Thread {
     public void run() {
       while(true) {
-        if(process.linkStatus.get(linkedTo)) {
+        
           try {
             Object msgObj = reader.readObject();
             if(msgObj instanceof Message) {
               Message m = (Message) msgObj;
-              handleMessage(m);
+              if(process.linkStatus.get(linkedTo)) {
+                handleMessage(m);
+              }
             }
           } catch(ClassNotFoundException e) {
             // e.printStackTrace();
           } catch(IOException e) {
             // e.printStackTrace();
           }
-        }
       }
     }
   }

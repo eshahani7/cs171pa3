@@ -40,6 +40,8 @@ public class Node implements Serializable{
   long current_time = 0;
 
   transient Timer timer = new Timer();
+  transient Timer timer2 = new Timer();
+  transient Timer timer3 = new Timer();
   boolean firstAddition = true;
   private boolean isLeader = false;
 
@@ -82,6 +84,8 @@ public class Node implements Serializable{
       e.printStackTrace();
     }
     timer = new Timer();
+    timer2 = new Timer();
+    timer3 = new Timer();
     if (q.size() > 0){
       run();
     }
@@ -206,6 +210,33 @@ public class Node implements Serializable{
     }
   }
 
+  private class startElection3 extends TimerTask{
+    public void run() {
+      if(isLeader && acceptCount < majority){
+        isLeader = false;
+      }
+    }
+  }
+
+  public void leaderTimeout(){
+    int rangeMin = 5;
+    int rangeMax = 9;
+    Random r = new Random();
+    delay = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
+    delay *= 1000;
+    timer2.schedule(new startElection2(), delay);
+  }
+
+  public void run2(){
+    int rangeMin = 5;
+    int rangeMax = 9;
+    Random r = new Random();
+    delay = (long)(rangeMin + (rangeMax - rangeMin) * r.nextDouble());
+    delay *= 1000;
+    timer3.schedule(new startElection3(), delay, delay*5);
+  }
+  
+
   private void elect() {
     if(q.size() != 0 || !firstAck) {
       if(q.size() != 0) {
@@ -243,7 +274,7 @@ public class Node implements Serializable{
   public synchronized void checkToClearQueue(Block b) {
     ArrayList<Transaction> tList = b.getList();
     for(int i = 0; i < tList.size(); i++) {
-      for(int j = 0; i < q.size(); i++) {
+      for(int j = 0; j < q.size(); j++) {
         if(q.get(j).equals(tList.get(i))) {
           q.remove(j);
           j = q.size();
@@ -357,6 +388,7 @@ public class Node implements Serializable{
     if(ackCount >= majority && !isLeader && blockchain.size() < ballotNum.depth) {
       Ballot a = ballotNum;
       isLeader = true;
+      run2();
       leaderAccept();
       for(int i = 0; i < channels.size(); i++) {
         if(channels.get(i) != null) {
