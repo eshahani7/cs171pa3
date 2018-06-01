@@ -241,8 +241,14 @@ public class Node implements Serializable{
   }
 
   public synchronized void checkToClearQueue(Block b) {
-    if(b.equals(q)) {
-      q = new ArrayList<Transaction>();
+    ArrayList<Transaction> tList = b.getList();
+    for(int i = 0; i < tList.size(); i++) {
+      for(int j = 0; i < q.size(); i++) {
+        if(q.get(j).equals(tList.get(i))) {
+          q.remove(j);
+          j = q.size();
+        }
+      }
     }
   }
 
