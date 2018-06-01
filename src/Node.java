@@ -240,6 +240,12 @@ public class Node implements Serializable{
     }
   }
 
+  public synchronized void checkToClearQueue(Block b) {
+    if(b.equals(q)) {
+      q = new ArrayList<Transaction>();
+    }
+  }
+
   public void printBlockchain() {
     for(int i = 0; i < blockchain.size(); i++) {
       System.out.println(blockchain.get(i));
