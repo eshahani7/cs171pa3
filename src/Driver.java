@@ -12,9 +12,7 @@ public class Driver {
       n.restore();
       n.clearVars();
       n.recovered = true;
-      System.out.println("I recovered");
     } catch (IOException e){
-        e.printStackTrace();
         n = new Node(Integer.parseInt(args[0]));
         n.check = 1;
 

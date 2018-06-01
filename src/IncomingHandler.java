@@ -13,7 +13,6 @@ public class IncomingHandler extends Thread {
 
   public void run() {
 
-    System.out.println("Incoming thread started");
     if(!processor.recovered){
       try {
         while(processor.tempChannels.size() < processor.num) {
@@ -21,17 +20,14 @@ public class IncomingHandler extends Thread {
           ChannelHandler c = new ChannelHandler(in, processor);
           processor.tempChannels.add(c);
           processor.linkStatus.put(in.getPort() % 3000, true);
-          System.out.println("Added temp");
         }
 
       } catch(IOException e) {
         e.printStackTrace();
       } //catch(NullPointerException){}
         //
-        System.out.println(processor.tempChannels.size());
         for(int i = 0; i < processor.tempChannels.size(); i++) {
           processor.tempChannels.get(i).start();
-          System.out.println("thread started");
         }
 
         processor.channels.addAll(processor.tempChannels);

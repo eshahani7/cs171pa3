@@ -16,7 +16,6 @@ public class OutgoingHandler extends Thread {
   public void run() {
     int start = processor.num + 1;
     System.out.println("node num + 1: " + start);
-    System.out.println(processor.recovered);
     if(!processor.recovered){
       for(int i = processor.num + 1; i < connections.size(); i++) {
         try {
@@ -33,13 +32,10 @@ public class OutgoingHandler extends Thread {
     }
 
     else {
-      System.out.println("Going into else in outgoing");
       for(int i = 0; i < 5; i++){
         try {
           if (i != processor.num){
-            System.out.println("Before");
             out = new Socket(connections.get(i).getKey(), connections.get(i).getValue());
-            System.out.println("After");
             System.out.println("Connected to: " + connections.get(i).getKey() + " on port: " + connections.get(i).getValue());
             ChannelHandler c = new ChannelHandler(out, processor);
             processor.channels.add(c);

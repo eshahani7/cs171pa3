@@ -33,10 +33,11 @@ public class ChannelHandler extends Thread {
     process = n;
     majority = 3;
     linkedTo = in.getPort() % 3000;
+    System.out.println("linkedTo is " + linkedTo);
   }
 
   public void setPrepare(Ballot bal) {
-    if(process.linkStatus.get(linkedTo)) {
+    if(process.linkStatus.get(linkedTo) && bal != null) {
       sendPrepare = true;
       prepBallot = bal;
     }
@@ -68,13 +69,17 @@ public class ChannelHandler extends Thread {
     }
 
     while(!exit) {
-      if(process.linkStatus.get(linkedTo)) {
+      if(linkedTo > 4 || linkedTo < 0){
+        System.out.println("Terminating " + linkedTo);
+        exit = true;
+      }
+      else if(process.linkStatus.get(linkedTo)) {
         if(sendPrepare){
           sendPrepare = false;
           Message send = new Message("prepare", prepBallot, null, null);
-          System.out.println("sending prepare w/ bal: " + send.bal);
+          System.out.println("sending prepare w/ bal: " + send.bal + " to " + linkedTo);
           sendMessage(send);
-          prepBallot = null;
+          //prepBallot = null;
         }
         else if(sendAccept) { //only do this once
           System.out.println("sending accepts");
@@ -82,7 +87,7 @@ public class ChannelHandler extends Thread {
           Message send = new Message("accept", acceptBallot, null, process.acceptVal);
           // System.out.println(send.v);
           sendMessage(send);
-          acceptBallot = null;
+          //acceptBallot = null;
         }
         else if(sendDecide) { //only do this once
           if(decideBlock != null) {
@@ -91,7 +96,7 @@ public class ChannelHandler extends Thread {
             Message send = new Message("decision", process.ballotNum, null, decideBlock); //need only one append per node
             System.out.println(decideBlock);
             sendMessage(send);
-            decideBlock = null;
+            //decideBlock = null;
           }
         }
 
@@ -101,12 +106,11 @@ public class ChannelHandler extends Thread {
           Message send = new Message("poll",null,null,null);
           sendMessage(send);
         }
-      }
 
-      else {
-        sendMessage(null);
+        else {
+          sendMessage(null);
+        }
       }
-
 
         if(r == null) {
           r = new ReadHandler();
@@ -196,7 +200,7 @@ public class ChannelHandler extends Thread {
     }
 
     else if(m.msgType.equals("stale")){
-      System.out.println("stale " + m.blockchain.size() + " " + process.blockchain.size());
+      //System.out.println("stale " + m.blockchain.size() + " " + process.blockchain.size());
       if (m.blockchain.size() > process.blockchain.size()){
         for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
           process.applyTransactions(m.blockchain.get(i));
@@ -231,7 +235,7 @@ public class ChannelHandler extends Thread {
 
   private class ReadHandler extends Thread {
     public void run() {
-      while(true) {
+      while(!exit) {
         
           try {
             Object msgObj = reader.readObject();
