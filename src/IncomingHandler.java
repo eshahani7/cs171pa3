@@ -19,7 +19,6 @@ public class IncomingHandler extends Thread {
           in = processor.serverSock.accept();
           ChannelHandler c = new ChannelHandler(in, processor);
           processor.tempChannels.add(c);
-          processor.linkStatus.put(in.getPort() % 3000, true);
         }
 
       } catch(IOException e) {
@@ -38,7 +37,6 @@ public class IncomingHandler extends Thread {
           in = processor.serverSock.accept();
           ChannelHandler c = new ChannelHandler(in, processor);
           processor.channels.add(c);
-          processor.linkStatus.put(in.getPort() % 3000, true);
           c.start();
         } catch(IOException e) {
           e.printStackTrace();

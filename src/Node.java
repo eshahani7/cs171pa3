@@ -235,7 +235,7 @@ public class Node implements Serializable{
     delay *= 1000;
     timer3.schedule(new startElection3(), delay, delay*5);
   }
-  
+
 
   private void elect() {
     if(q.size() != 0 || !firstAck) {
