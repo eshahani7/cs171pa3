@@ -32,8 +32,7 @@ public class ChannelHandler extends Thread {
     channel = in;
     process = n;
     majority = 3;
-    linkedTo = in.getPort() % 3000;
-    System.out.println("linkedTo is " + linkedTo);
+    linkedTo = -1;
   }
 
   public void setPrepare(Ballot bal) {
@@ -64,12 +63,16 @@ public class ChannelHandler extends Thread {
       System.out.println("trying to open reader");
       reader = new ObjectInputStream(channel.getInputStream());
       System.out.println("reader connected");
+      System.out.println("Before");
+      Message m = new Message("port " + process.num,null,null,null);
+      sendMessage(m);
+      System.out.println("After");
     } catch(IOException e) {
       e.printStackTrace();
     }
 
     while(!exit) {
-      if(linkedTo > 4 || linkedTo < 0){
+      if(linkedTo != -1 && (linkedTo > 4 || linkedTo < 0)){
         System.out.println("Terminating " + linkedTo);
         exit = true;
       }
@@ -121,6 +124,9 @@ public class ChannelHandler extends Thread {
 
   public void handleMessage(Message m) {
 
+    if(m.msgType.substring(0,4).equals("port")){
+      linkedTo = Integer.parseInt(m.msgType.substring(5));
+    }
     if(m.msgType.equals("prepare")) {
       System.out.println("got prepare: " + m.bal + ", accept: " + m.a);
       if(m.bal.compareTo(process.ballotNum) >= 0 && m.bal.depth != process.blockchain.size()) { //msg ballot >= my ballot
