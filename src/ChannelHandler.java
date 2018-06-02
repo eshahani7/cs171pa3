@@ -8,7 +8,6 @@ public class ChannelHandler extends Thread {
   private Node process;
   private int majority;
   public int linkedTo;
-  public String socketIP;
 
   private ObjectOutputStream writer = null;
   private ObjectInputStream reader = null;
@@ -35,7 +34,6 @@ public class ChannelHandler extends Thread {
     process = n;
     majority = 3;
     linkedTo = -1;
-    socketIP = channel.getRemoteSocketAddress().toString();
   }
 
   public void setPrepare(Ballot bal) {
@@ -244,6 +242,7 @@ public class ChannelHandler extends Thread {
               if(m.msgType.length() > 4 && (m.msgType.substring(0,4)).equals("port")){
                 linkedTo = Integer.parseInt(m.msgType.substring(5));
                 System.out.println("connected to node: " + linkedTo);
+                process.linkStatus.put(linkedTo, true);
               }
               else if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
                 handleMessage(m);

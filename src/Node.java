@@ -283,6 +283,15 @@ public class Node implements Serializable{
     }
   }
 
+  public synchronized void deleteExtra(int l) {
+    for(int i = 0; i < channels.size(); i++) {
+      if(channels.get(i).linkedTo == l) {
+        channels.remove(i);
+        i = channels.size();
+      }
+    }
+  }
+
   public void printBlockchain() {
     for(int i = 0; i < blockchain.size(); i++) {
       System.out.println(blockchain.get(i));
