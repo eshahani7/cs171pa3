@@ -63,10 +63,8 @@ public class ChannelHandler extends Thread {
       System.out.println("trying to open reader");
       reader = new ObjectInputStream(channel.getInputStream());
       System.out.println("reader connected");
-      System.out.println("Before");
       Message m = new Message("port " + process.num,null,null,null);
       sendMessage(m);
-      System.out.println("After");
     } catch(IOException e) {
       e.printStackTrace();
     }
@@ -76,7 +74,7 @@ public class ChannelHandler extends Thread {
         System.out.println("Terminating " + linkedTo);
         exit = true;
       }
-      else if(process.linkStatus.get(linkedTo)) {
+      else if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
         if(sendPrepare){
           sendPrepare = false;
           Message send = new Message("prepare", prepBallot, null, null);
@@ -190,7 +188,7 @@ public class ChannelHandler extends Thread {
       System.out.println("got blockchain");
       if(m.blockchain.size() > process.blockchain.size()){
         for (int i = process.blockchain.size(); i < m.blockchain.size(); i++){
-          process.applyTransactions(m.blockchain.get(i));        
+          process.applyTransactions(m.blockchain.get(i));
         }
 
         process.blockchain = m.blockchain;
@@ -242,12 +240,11 @@ public class ChannelHandler extends Thread {
   private class ReadHandler extends Thread {
     public void run() {
       while(!exit) {
-        
           try {
             Object msgObj = reader.readObject();
             if(msgObj instanceof Message) {
               Message m = (Message) msgObj;
-              if(process.linkStatus.get(linkedTo)) {
+              if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
                 handleMessage(m);
               }
             }
