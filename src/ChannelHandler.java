@@ -61,7 +61,7 @@ public class ChannelHandler extends Thread {
     try {
       writer = new ObjectOutputStream(channel.getOutputStream());
       System.out.println("writer connected");
-      System.out.println("trying to open reader");
+      // System.out.println("trying to open reader");
       reader = new ObjectInputStream(channel.getInputStream());
       System.out.println("reader connected");
       Message m = new Message("port " + process.num, null, null, null);

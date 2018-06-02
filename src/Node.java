@@ -111,7 +111,7 @@ public class Node implements Serializable{
     acceptVal = null;
     acks = new ArrayList<Message>();
     System.out.println("vars cleared");
-    System.out.println("bal: " + ballotNum + ", accept: " + acceptNum + ", val: " + acceptVal);
+    // System.out.println("bal: " + ballotNum + ", accept: " + acceptNum + ", val: " + acceptVal);
   }
 
   public void readConfigFile() {
@@ -290,12 +290,12 @@ public class Node implements Serializable{
           for(int j = i-1; j >= 0; j--){
             if(channels.get(i).linkedTo == channels.get(j).linkedTo) {
               //System.out.println(i + " " + j);
-              System.out.println("deleting: " + channels.get(j).linkedTo);
+              // System.out.println("deleting: " + channels.get(j).linkedTo);
               channels.remove(j);
               i--;
               j--;
             }
-          } 
+          }
         }
       }
   }
