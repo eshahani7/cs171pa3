@@ -249,6 +249,7 @@ public class Node implements Serializable{
       ballotNum = new Ballot(old+1, num, blockchain.size() + 1);
       Ballot prepBallot = ballotNum;
       System.out.println("starting election w/ ballot: " + ballotNum);
+      deleteExtra();
       for(int i = 0; i < channels.size(); i++) {
         if(channels.get(i) != null) {
           channels.get(i).setPrepare(prepBallot);
@@ -283,16 +284,20 @@ public class Node implements Serializable{
     }
   }
 
-  public synchronized void deleteExtra(int l) {
-    if(l != -1 && channels.size() > 4) {
-      for(int i = 0; i < channels.size(); i++) {
-        if(channels.get(i).linkedTo == l) {
-          System.out.println("deleting: " + l + " " + channels.get(i).linkedTo);
-          channels.remove(i);
-          i = channels.size();
+  public synchronized void deleteExtra() {
+      for(int i = channels.size() - 1; i > 0; i--) {
+        if (channels.get(i).linkedTo != -1){
+          for(int j = i-1; j >= 0; j--){
+            if(channels.get(i).linkedTo == channels.get(j).linkedTo) {
+              //System.out.println(i + " " + j);
+              System.out.println("deleting: " + channels.get(j).linkedTo);
+              channels.remove(j);
+              i--;
+              j--;
+            }
+          } 
         }
       }
-    }
   }
 
   public void printBlockchain() {

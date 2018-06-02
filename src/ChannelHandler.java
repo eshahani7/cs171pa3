@@ -243,7 +243,7 @@ public class ChannelHandler extends Thread {
                 linkedTo = Integer.parseInt(m.msgType.substring(5));
                 System.out.println("connected to node: " + linkedTo);
                 process.linkStatus.put(linkedTo, true);
-                process.deleteExtra(linkedTo);
+                process.deleteExtra();
               }
               else if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
                 handleMessage(m);
