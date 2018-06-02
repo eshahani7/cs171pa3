@@ -7,7 +7,8 @@ public class ChannelHandler extends Thread {
   private Socket channel;
   private Node process;
   private int majority;
-  private int linkedTo;
+  public int linkedTo;
+  public String socketIP;
 
   private ObjectOutputStream writer = null;
   private ObjectInputStream reader = null;
@@ -16,6 +17,7 @@ public class ChannelHandler extends Thread {
   boolean sendAccept = false;
   boolean sendDecide = false;
   boolean sendPrepare = false;
+  boolean sentLink = false;
 
   boolean poll = false;
 
@@ -33,6 +35,7 @@ public class ChannelHandler extends Thread {
     process = n;
     majority = 3;
     linkedTo = -1;
+    socketIP = channel.getRemoteSocketAddress().toString();
   }
 
   public void setPrepare(Ballot bal) {
@@ -65,17 +68,21 @@ public class ChannelHandler extends Thread {
       System.out.println("reader connected");
       Message m = new Message("port " + process.num, null, null, null);
       sendMessage(m);
-      System.out.println("after sent port message");
     } catch(IOException e) {
       e.printStackTrace();
     }
 
     while(!exit) {
-      if(linkedTo != -1 && (linkedTo > 4 || linkedTo < 0)){
-        System.out.println("Terminating " + linkedTo);
-        exit = true;
+      if(r == null) {
+        r = new ReadHandler();
+        r.start();
       }
-      else if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
+
+      // if(linkedTo != -1 && (linkedTo > 4 || linkedTo < 0)){
+      //   System.out.println("Terminating " + linkedTo);
+      //   exit = true;
+      // }
+      if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
         if(sendPrepare){
           sendPrepare = false;
           Message send = new Message("prepare", prepBallot, null, null);
@@ -107,18 +114,12 @@ public class ChannelHandler extends Thread {
           Message send = new Message("poll",null,null,null);
           sendMessage(send);
         }
-
-        else {
-          sendMessage(null);
-        }
       }
-
-        if(r == null) {
-          r = new ReadHandler();
-          r.start();
-        }
+      else {
+        sendMessage(null);
       }
     }
+  }
 
   public void handleMessage(Message m) {
     if(m.msgType.equals("prepare")) {
@@ -240,16 +241,16 @@ public class ChannelHandler extends Thread {
             Object msgObj = reader.readObject();
             if(msgObj instanceof Message) {
               Message m = (Message) msgObj;
-              if((m.msgType.substring(0,4)).equals("port")){
+              if(m.msgType.length() > 4 && (m.msgType.substring(0,4)).equals("port")){
                 linkedTo = Integer.parseInt(m.msgType.substring(5));
                 System.out.println("connected to node: " + linkedTo);
-                process.linkStatus.put(linkedTo, true);
               }
-              if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
+              else if(linkedTo != -1 && process.linkStatus.get(linkedTo)) {
                 handleMessage(m);
               }
             }
-          } catch(ClassNotFoundException e) {
+          }
+          catch(ClassNotFoundException e) {
             // e.printStackTrace();
           } catch(IOException e) {
             // e.printStackTrace();
