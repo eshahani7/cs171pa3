@@ -51,6 +51,9 @@ public class Driver {
         n.setLink(linkNum, true);
         System.out.println("fixed link to " + linkNum);
       }
+      else if(cmd.equals("crash")) {
+        System.exit(0);
+      }
     }
 
   }
